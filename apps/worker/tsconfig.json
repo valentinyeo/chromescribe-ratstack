@@ -14,10 +14,20 @@
           "effect/http/HttpServerRequest",
           "effect/http/HttpServerResponse",
           "effect/http-api/HttpApiBuilder",
-          "effect/http-api/HttpApiScalar"
+          "effect/http-api/HttpApiScalar",
+          "effect/crypto/Digest",
+          "effect/http/FetchHttpClient",
+          "effect/http/HttpClient",
+          "effect/http/HttpClientResponse",
+          "effect/rpc/RpcSerialization",
+          "effect/rpc/RpcServer"
         ]
       }
     ]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "scripts/**/*.ts"
+  ]
 }

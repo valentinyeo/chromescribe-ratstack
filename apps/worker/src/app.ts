@@ -1,17 +1,41 @@
-import { Layer } from "effect";
-import { HttpRouter, HttpServer } from "effect/http";
-import { HttpApiBuilder, HttpApiScalar } from "effect/http-api";
+import { toHttpApi, toRpc } from "@chromescribe/capability";
+import { transcriptCapabilities } from "@chromescribe/core";
+import type { AccessVerifier, TranscriptContentStore, TranscriptRepository } from "@chromescribe/core";
+import { Effect, Layer } from "effect";
+import { HttpRouter, HttpServer, HttpServerRequest, HttpServerResponse } from "effect/http";
+import { HttpApiBuilder } from "effect/http-api";
+import { RpcSerialization, RpcServer } from "effect/rpc";
 
-import { http } from "./health.js";
+import { accessGate } from "./access-gate.js";
+import { transcriptHttp } from "./transcript-http.js";
 
-export const routes = Layer.merge(
-  HttpApiBuilder.layer(http.api, { openapiPath: "/openapi.json" }).pipe(
-    Layer.provide(http.layer)
-  ),
-  HttpApiScalar.layer(http.api, { path: "/docs" })
-);
+export const rpc = toRpc(transcriptCapabilities);
+export const http = toHttpApi("ChromeScribeTranscripts", transcriptCapabilities);
 
-export const server = HttpRouter.toWebHandler(
-  routes.pipe(Layer.provide(HttpServer.layerServices)),
-  { disableLogger: true }
-);
+const compatibility = HttpRouter.add("GET", "/api/*", Effect.gen(function* compatibility() {
+  const incoming = yield* HttpServerRequest.HttpServerRequest;
+  const request = yield* HttpServerRequest.toWeb(incoming);
+  const response = yield* transcriptHttp(request);
+  return HttpServerResponse.fromWeb(response);
+}));
+
+const gate = HttpRouter.middleware((httpEffect) => Effect.gen(function* gate() {
+  const incoming = yield* HttpServerRequest.HttpServerRequest;
+  const request = yield* HttpServerRequest.toWeb(incoming);
+  const denied = yield* accessGate(request);
+  if (denied) return HttpServerResponse.fromWeb(denied);
+  return yield* httpEffect;
+}), { global: true });
+
+export const makeServer = (services: Layer.Layer<AccessVerifier | TranscriptRepository | TranscriptContentStore>) => {
+  const routes = Layer.mergeAll(
+    compatibility,
+    HttpApiBuilder.layer(http.api).pipe(Layer.provide(http.layer)),
+    RpcServer.layerHttp({ group: rpc.group, path: "/rpc", protocol: "http" }).pipe(
+      Layer.provide(rpc.layer),
+      Layer.provide(RpcSerialization.layerJson)
+    ),
+    gate
+  ).pipe(Layer.provide(services), Layer.provide(HttpServer.layerServices));
+  return HttpRouter.toWebHandler(routes, { disableLogger: true });
+};

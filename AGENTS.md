@@ -204,7 +204,12 @@ Preserve existing work. Inspect status before editing, stage only files changed 
 
 ## Project law
 
-A child project replaces this section on day one with its own product rules. These rules describe the rat-stack template, not the product in a clone. Keep durable product intent in `VISION.md`.
+ChromeScribe uses Rat Stack to replace its dashboard in vertical slices. `VISION.md` owns product intent.
+
+- Read-only preview first at https://next.chromescribe.yeoux.net. Leave https://chromescribe.yeoux.net unchanged and never show a workers.dev address.
+- Cloudflare Access stays in front. Gate API and RPC calls by default, fail closed without `ACCESS_AUD`, and never send CORS headers. Public `/reports/:id` remains outside the backend JWT gate.
+- Existing ingestion is the only writer. No preview writes, DDL, automatic migrations, thumbnail cache fills, transcription, inference or queue processing.
+- No prose comments in code. Full TypeScript, lint, formatting, test and build checks run only on GitHub Actions `ubuntu-latest`, through Turbo with summaries. Never run these checks on this shared server.
 
 - One contract, every surface. For Alchemy Domain models, follow the durable-state rule below: the model's Api is its contract. Elsewhere, define schemas and metadata with `defineContract`; bind a server-side handler with `implement` and add the capability to `capabilities`. CLI, HTTP, MCP, RPC, code mode, and WebMCP are projections in `packages/capability`. Do not add a command, route, or tool handler that bypasses its contract.
 - Schemas are the contract. Input, output, and failure are Effect `Schema`; JSON Schema, OpenAPI, and the code-mode declarations are derived from them, never hand-written.
@@ -228,7 +233,14 @@ A child project replaces this section on day one with its own product rules. The
 
 ## Architecture
 
-A child project replaces this section on day one with its own architecture. Record module boundaries, dependency direction, data ownership, and state-machine seams here. Link deeper docs instead of duplicating them.
+ChromeScribe owns the following boundaries. The inherited Rat Stack constraints below still apply.
+
+- `packages/core/src/transcripts.ts` owns transcript schemas, typed failures and the `TranscriptRepository`, `TranscriptContentStore` and `AccessVerifier` ports. Core has no D1, R2, HTTP-client or Cloudflare adapters.
+- `packages/database/src/transcript-repository.ts` implements read-only SQL queries. `src/schema/chromescribe.ts` describes all four existing tables; `baseline/chromescribe` records their schema and historical queue migration. Never apply this baseline to live D1.
+- `packages/core/src/contracts.ts` defines read contracts; `transcript-capabilities.ts` binds the shared handlers. `apps/worker` projects HTTP and RPC, preserves legacy read routes and supplies D1/R2/Access adapters.
+- `apps/web` uses the `RPC_BACKEND` service binding, not a public backend URL. Its server wrapper forwards API/RPC before Foldkit page negotiation. Browser features import only browser-safe contract projections.
+- `apps/worker/src/worker.ts` declares adoption and unconditional retention of shared live D1/R2 resources. They are irreplaceable across every stage. No migration provider is attached. `apps/infra` composes the backend and Website; only preview outside Alchemy dev can attach the preview custom domain.
+- See `packages/database/baseline/chromescribe/README.md` for migration safety and intentional compatibility limits.
 
 - `rat-stack-boundaries/no-core-adapters` keeps provider adapters out of core. Core owns job-shaped ports; adapter packages implement them, and apps provide them at composition. `packages/subscriber-delivery` implements subscriber intake and confirmation; `packages/core/test/boundaries-rule.test.ts` checks the boundary.
 - `rat-stack-boundaries/no-cross-layer-imports` enforces dependency direction: `apps/cli` → `packages/core` → `packages/capability` → Effect/XState. Packages do not import apps; `packages/capability` does not import domain code; `apps/infra` owns its Stack wiring. `core` owns shared contracts and the `inspectFile` handler; each capability's owner keeps its handler beside its data or infrastructure. Core depends on `capability` for `defineContract` and `implement`.
@@ -269,7 +281,9 @@ Never end a turn "waiting" without a wake. Procedure: `skills/rat-stack-mode/pri
 
 ## Boundaries and sign-off
 
-A child project replaces this section on day one with its own boundaries. This section names changes agents may make directly and changes that need owner approval.
+ChromeScribe foundation work stops at code, tests and a ready-for-review PR. Do not merge or deploy this slice. The legacy checkout is read-only reference material.
+
+Any later deployment requires approval and a reviewed Alchemy plan using the correct account and named profile. Never change the production hostname, Access policies, live schemas or data as incidental setup.
 
 - Safe by default: adding a capability in `packages/core` and wiring it into `capabilities`; new or tightened tests; a targeted diagnostic override with a written reason; README, AGENTS.md, and `.brain/` edits; tightening a lint rule; removing a surface by following Keep or cut; adding or changing a dependency at an exact pin, once a cold `pnpm install --frozen-lockfile` and the full gate pass; any change under `apps/infra`, and `pnpm infra:deploy` once `pnpm infra:plan` shows only the intended diff and the gate passes, followed by `pnpm site:smoke`.
 - Needs owner sign-off: any edit to `oxlint.config.ts`, the diagnostics map in `tsconfig.base.json`, `lefthook.yml`, or `scripts/vcs-command-policy.js` that loosens the fence; `pnpm infra:destroy`, and a deploy whose plan replaces or deletes a resource; widening sandbox permissions or adding a runtime that reaches the network; exposing `serve` or `mcp` beyond localhost; vendoring a package as a `file:` tarball; deleting `.agent_sources/` or `vendor/`.

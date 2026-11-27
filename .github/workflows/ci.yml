@@ -36,6 +36,17 @@ jobs:
         env:
           LANDMINES_BASE: ${{ github.event.pull_request.base.sha }}
         run: pnpm turbo run check test build --summarize --concurrency=2
+      - name: Save formatting repair for failed checks
+        if: failure()
+        run: |
+          pnpm exec oxfmt .
+          git diff --binary > /tmp/formatting.patch
+      - name: Upload formatting repair
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatting-repair
+          path: /tmp/formatting.patch
       - name: Report built Worker and site sizes
         run: |
           measure() {

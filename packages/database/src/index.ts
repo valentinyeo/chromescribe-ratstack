@@ -26,3 +26,6 @@ export type {
   RunLogEntry,
   RunOutcome,
 } from "./model.js";
+
+export { transcriptRepositoryLayer } from "./transcript-repository.js";
+export type { TranscriptSql } from "./transcript-repository.js";

@@ -280,5 +280,5 @@ export const styles = stylex.create({
 });
 
 export const classes = (
-  ...rules: Parameters<typeof stylex.props>
+  ...rules: readonly (stylex.StyleXStyles | stylex.Theme<typeof colors>)[]
 ) => stylex.props(...rules).className ?? "";

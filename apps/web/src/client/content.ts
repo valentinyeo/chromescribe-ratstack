@@ -19,7 +19,10 @@ export const splitSections = (markdown: string) => {
 };
 
 export const timestampSeconds = (text: string): number | undefined => {
-  const match = /^\[(?:(?<hours>\d+):)?(?<minutes>\d{1,2}):(?<seconds>\d{2})\]$/u.exec(text);
+  const match =
+    /^\[(?:(?<hours>\d+):)?(?<minutes>\d{1,2}):(?<seconds>\d{2})\]$/u.exec(
+      text
+    );
 
   if (!match) {
     return undefined;

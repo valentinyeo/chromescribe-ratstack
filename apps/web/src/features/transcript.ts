@@ -69,14 +69,16 @@ export const transcriptView = (
       ),
       h.p(
         [h.Class(classes(styles.eyebrow))],
-        [media.label, detail.category !== null ? ` / ${detail.category}` : ""]
+        [media.label, detail.category === null ? "" : ` / ${detail.category}`]
       ),
       h.h1([h.Class(classes(styles.title))], [detail.title]),
       h.p(
         [h.Class(classes(styles.subtitle))],
         [
           detail.channel ?? "",
-          detail.created_at !== null ? ` · ${detail.created_at.slice(0, 10)}` : "",
+          detail.created_at === null
+            ? ""
+            : ` · ${detail.created_at.slice(0, 10)}`,
         ]
       ),
       media.src

@@ -51,10 +51,17 @@ export const LibraryKeyboard = Mount.defineStream("LibraryKeyboard", {
               return;
             }
 
-            const current = cards.findIndex((card) => card.contains(owner.activeElement));
+            const current = cards.findIndex((card) =>
+              card.contains(owner.activeElement)
+            );
+
             const step = event.key === "j" ? 1 : -1;
             const initial = event.key === "j" ? 0 : cards.length - 1;
-            const index = current === -1 ? initial : (current + step + cards.length) % cards.length;
+
+            const index =
+              current === -1
+                ? initial
+                : (current + step + cards.length) % cards.length;
 
             event.preventDefault();
             cards[index]?.focus();

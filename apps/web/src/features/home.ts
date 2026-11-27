@@ -59,24 +59,26 @@ const card = (row: Transcript, model: Model, h: HtmlBuilder<AppMessage>) => {
       h.div(
         [h.Class(classes(styles.cardBody, styles.metadata))],
         [
-          row.channel !== null
-            ? h.a(
+          row.channel === null
+            ? "Unknown channel"
+            : h.a(
                 [
                   h.Href(libraryHref("", row.channel)),
                   h.Class(classes(styles.link)),
                 ],
                 [row.channel]
-              )
-            : "Unknown channel",
+              ),
           h.div(
             [],
             [
               [
                 row.created_at?.slice(0, 10),
-                row.duration !== null ? `${Math.floor(row.duration / 60)} min` : "",
-                row.word_count !== null
-                  ? `${row.word_count.toLocaleString("en-US")} words`
-                  : "",
+                row.duration === null
+                  ? ""
+                  : `${Math.floor(row.duration / 60)} min`,
+                row.word_count === null
+                  ? ""
+                  : `${row.word_count.toLocaleString("en-US")} words`,
               ]
                 .filter(Boolean)
                 .join(" · "),

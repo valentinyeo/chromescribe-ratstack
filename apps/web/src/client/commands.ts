@@ -5,10 +5,10 @@ import { Messages } from "./messages.js";
 import { Theme } from "./model.js";
 import { TranscriptRpc } from "./rpc.js";
 
-class BrowserActionFailed extends Schema.TaggedError<BrowserActionFailed, { readonly brand: unique symbol }>()(
-  "BrowserActionFailed",
-  { cause: Schema.Defect() }
-) {}
+class BrowserActionFailed extends Schema.TaggedError<
+  BrowserActionFailed,
+  { readonly brand: unique symbol }
+>()("BrowserActionFailed", { cause: Schema.Defect() }) {}
 
 export const ReadLocation = Command.define("ReadLocation", {
   messages: [Messages.LoadedLocation],

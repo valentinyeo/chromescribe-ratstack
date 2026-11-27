@@ -45,8 +45,9 @@ const inline = (
       const link = /^\[(?<label>[^\]]+)\]\((?<href>[^)]+)\)$/u.exec(token);
       const href = safeLink(link?.groups?.href ?? "");
       children.push(
-        href !== undefined
-          ? h.a(
+        href === undefined
+          ? token
+          : h.a(
               [
                 h.Href(href),
                 h.Target("_blank"),
@@ -55,7 +56,6 @@ const inline = (
               ],
               [link?.groups?.label ?? token]
             )
-          : token
       );
     }
 

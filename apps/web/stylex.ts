@@ -10,7 +10,13 @@ const PluginSchema = Schema.declare<Plugin>(
     Predicate.isString(value.name)
 );
 
-const options = { runtimeInjection: false };
+const options = {
+  runtimeInjection: false,
+  unstable_moduleResolution: {
+    type: "commonJS" as const,
+    rootDir: import.meta.dirname,
+  },
+};
 
 export const stylexRenderingPlugin = () =>
   Schema.decodeUnknownSync(PluginSchema)(stylexRollup(options));

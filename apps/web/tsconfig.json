@@ -13,7 +13,13 @@
         "allowedUnstableApis": [
           "effect/FileSystem",
           "effect/Path",
-          "@effect/vitest"
+          "@effect/vitest",
+          "effect/Arbitrary",
+          "effect/http/FetchHttpClient",
+          "effect/rpc/RpcClient",
+          "effect/rpc/RpcClientError",
+          "effect/rpc/RpcSerialization",
+          "effect/rpc/RpcTest"
         ]
       }
     ]

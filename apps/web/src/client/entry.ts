@@ -1,14 +1,18 @@
 import { Runtime } from "foldkit";
 
-import { HomeModelSchema, initialHome } from "../model.js";
+import "../reset.css";
 import { view } from "../view.js";
+import { ModelSchema } from "./model.js";
+import { TranscriptRpc } from "./rpc.js";
+import { init, update } from "./update.js";
 
 const application = Runtime.makeApplication({
-  Model: HomeModelSchema,
+  Model: ModelSchema,
   container: document.querySelector("#root"),
-  init: () => ({ model: initialHome }),
-  update: (model) => ({ model }),
+  init,
+  update,
   view,
+  resources: TranscriptRpc.layer,
 });
 
 Runtime.hydrate(application);

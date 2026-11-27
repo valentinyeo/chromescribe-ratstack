@@ -9,13 +9,13 @@ import type {
   EntryResult,
 } from "foldkit/experimental/server";
 
-import { initialHome } from "./model.js";
+import { initialModel } from "./client/model.js";
 import { view } from "./view.js";
 
 export const prerenderPaths = ["/"];
 
 const application = {
-  init: () => ({ model: initialHome }),
+  init: () => ({ model: initialModel }),
   view,
 };
 

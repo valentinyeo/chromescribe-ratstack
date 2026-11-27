@@ -8,7 +8,7 @@
     "typecheck:tsc": "tsc --noEmit -p tsconfig.json",
     "typecheck:fast": "tsrs --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node scripts/bundle.ts",
     "bundle": "node scripts/bundle.ts",
     "check": "pnpm run typecheck"
   },

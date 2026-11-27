@@ -40,20 +40,19 @@ jobs:
         run: |
           measure() {
             if [ ! -d "$1" ]; then
-              echo "::warning::$1 missing after build"
-              return 0
+              echo "::error::$1 missing after build"
+              return 1
             fi
             total=$(find "$1" -type f -printf '%s\n' | awk '{sum += $1} END {print sum + 0}')
             printf '### %s: %s bytes (%.1f KiB), %s files\n' \
               "$1" "$total" "$(awk -v b="$total" 'BEGIN {print b / 1024}')" \
               "$(find "$1" -type f | wc -l)" | tee -a "$GITHUB_STEP_SUMMARY"
-            find "$1" -type f -printf '%12s  %p\n' | sort -rn | head -20 | tee -a "$GITHUB_STEP_SUMMARY"
+            find "$1" -type f -printf '%12s  %p\n' | sort -rn | sed -n '1,20p' | tee -a "$GITHUB_STEP_SUMMARY"
           }
-          measure apps/worker/dist
+          measure apps/worker/dist/bundle
           measure apps/web/dist
-      - name: Report Worker esbuild bundle size
-        continue-on-error: true
-        run: pnpm --filter @chromescribe/worker run bundle
+          measure apps/web/dist/client
+          measure apps/web/dist/server
       - name: Report Turbo cache story
         if: always()
         continue-on-error: true

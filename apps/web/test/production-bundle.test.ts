@@ -33,6 +33,13 @@ describe("production web bundle", () => {
     expect(files.some((file) => file.endsWith(".html"))).toBe(true);
   });
 
+  it("loads scripts and styles only from the built site, never a CDN", () => {
+    const html = files.filter((file) => file.endsWith(".html")).map((file) => readFileSync(file, "utf-8")).join("\n");
+    expect(html).not.toMatch(/<(?:script|link)\b[^>]*(?:src|href)=["'](?:https?:)?\/\//iu);
+    expect(html).not.toContain("fonts.googleapis.com");
+    expect(html).not.toContain("#ff1493");
+  });
+
   it("ships no devtools, rat_call, or dev composition", () => {
     const bundle = contents();
 

@@ -101,14 +101,14 @@ it.effect(
         }
       }
 
-      const page = yield* Effect.promise(() =>
-        website.default.fetch(
-          new Request("https://next.chromescribe.yeoux.net/"),
-          bindings
-        )
-      );
-
-      expect(page.status).toBe(200);
+      for (const path of ["/", "/index.html?channel=Example&q=memory", "/transcript?id=4", "/transcript.html?id=4"]) {
+        const page = yield* Effect.promise(() => website.default.fetch(new Request(`https://next.chromescribe.yeoux.net${path}`), bindings));
+        expect(page.status).toBe(200);
+        const html = yield* Effect.promise(() => page.text());
+        expect(html).toContain("ChromeScribe");
+        expect(html).toContain("Opening your library");
+        expect(html).not.toMatch(/<(?:script|link)\b[^>]*(?:src|href)=["'](?:https?:)?\/\//iu);
+      }
       expect(calls).toHaveLength(4);
     })
 );

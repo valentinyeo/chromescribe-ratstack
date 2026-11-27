@@ -1,0 +1,127 @@
+name: Preview deployment
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chromescribe-preview
+  cancel-in-progress: true
+
+jobs:
+  configured:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.config.outputs.enabled }}
+    steps:
+      - name: Check preview configuration
+        id: config
+        env:
+          PREVIEW_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PREVIEW_ACCOUNT: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          PREVIEW_AUDIENCE: ${{ secrets.ACCESS_AUD }}
+          PREVIEW_APPROVAL: ${{ vars.CHROMESCRIBE_PREVIEW_DEPLOY_ENABLED }}
+        run: |
+          if [ -z "$PREVIEW_TOKEN" ]; then
+            echo "::notice::Preview deployment skipped. CLOUDFLARE_API_TOKEN is not configured."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          elif [ "$PREVIEW_APPROVAL" != "true" ]; then
+            echo "::notice::Preview deployment skipped. Owner approval and protected chromescribe-preview environment setup are required before enabling CHROMESCRIBE_PREVIEW_DEPLOY_ENABLED."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          elif [ -z "$PREVIEW_ACCOUNT" ] || [ -z "$PREVIEW_AUDIENCE" ]; then
+            echo "::notice::Preview deployment skipped. Configure CLOUDFLARE_ACCOUNT_ID and ACCESS_AUD for the preview account."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  plan:
+    needs: configured
+    if: needs.configured.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    env:
+      TURBO_RUN_SUMMARY: "true"
+      TURBO_CACHE: local:rw
+      ALCHEMY_PROFILE: chromescribe-preview
+      ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
+      CHRO10_API_GATE: "1"
+      CHROMESCRIBE_PREVIEW_DOMAIN: next.chromescribe.yeoux.net
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+      - run: corepack enable && corepack prepare pnpm@11.3.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - name: Full gate on the deployment revision
+        run: pnpm turbo run check test build --summarize --concurrency=2
+      - name: Import credentials into the named Alchemy profile
+        env:
+          PREVIEW_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PREVIEW_ACCOUNT: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm alchemy profile create chromescribe-preview
+          printf '%s' "$PREVIEW_TOKEN" | pnpm alchemy profile edit --profile chromescribe-preview --add Cloudflare --method stored --set apiToken=- --set "accountId=$PREVIEW_ACCOUNT"
+      - name: Reviewable preview plan
+        run: |
+          set -o pipefail
+          pnpm infra:plan --stage preview --profile chromescribe-preview | tee preview-plan.txt
+      - name: Upload plan and check evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-plan
+          path: |
+            preview-plan.txt
+            .turbo/runs/*.json
+          include-hidden-files: true
+      - name: Remove temporary credentials
+        if: always()
+        run: rm -rf "$HOME/.alchemy/profiles/chromescribe-preview" "$HOME/.alchemy/credentials/chromescribe-preview"
+
+  deploy:
+    needs: plan
+    runs-on: ubuntu-latest
+    environment:
+      name: chromescribe-preview
+      url: https://next.chromescribe.yeoux.net
+    env:
+      TURBO_RUN_SUMMARY: "true"
+      TURBO_CACHE: local:rw
+      ALCHEMY_PROFILE: chromescribe-preview
+      ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
+      CHRO10_API_GATE: "1"
+      CHROMESCRIBE_PREVIEW_DOMAIN: next.chromescribe.yeoux.net
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+      - run: corepack enable && corepack prepare pnpm@11.3.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build --summarize --concurrency=2
+      - name: Import credentials into the named Alchemy profile
+        env:
+          PREVIEW_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PREVIEW_ACCOUNT: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm alchemy profile create chromescribe-preview
+          printf '%s' "$PREVIEW_TOKEN" | pnpm alchemy profile edit --profile chromescribe-preview --add Cloudflare --method stored --set apiToken=- --set "accountId=$PREVIEW_ACCOUNT"
+      - name: Apply approved preview plan
+        run: pnpm infra:deploy --stage preview --profile chromescribe-preview --yes
+      - name: Upload Turbo summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-deploy-runs
+          path: .turbo/runs/*.json
+          include-hidden-files: true
+      - name: Remove temporary credentials
+        if: always()
+        run: rm -rf "$HOME/.alchemy/profiles/chromescribe-preview" "$HOME/.alchemy/credentials/chromescribe-preview"

@@ -2,21 +2,39 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "types": ["node", "vite/client"],
+    "types": [
+      "node",
+      "vite/client"
+    ],
     "plugins": [
       {
         "name": "@effect/language-service",
         "allowedUnstableApis": [
           "effect/FileSystem",
           "effect/Path",
-          "@effect/vitest"
+          "@effect/vitest",
+          "effect/Arbitrary",
+          "effect/http/FetchHttpClient",
+          "effect/rpc/RpcClient",
+          "effect/rpc/RpcClientError",
+          "effect/rpc/RpcSerialization",
+          "effect/rpc/RpcTest"
         ]
       }
     ]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "*.config.ts", "stylex.ts"]
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "*.config.ts",
+    "stylex.ts"
+  ]
 }

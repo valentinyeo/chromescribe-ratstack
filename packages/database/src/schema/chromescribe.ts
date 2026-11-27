@@ -9,7 +9,9 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
-const legacyDateTime = customType<{ data: string }>({ dataType: () => "DATETIME" });
+const legacyDateTime = customType<{ data: string }>({
+  dataType: () => "DATETIME",
+});
 
 export const transcripts = sqliteTable(
   "transcripts",

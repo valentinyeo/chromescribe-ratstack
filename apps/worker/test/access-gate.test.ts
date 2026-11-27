@@ -51,12 +51,12 @@ const fixture = Effect.fn("fixture")(function* fixture() {
   const sign = Effect.fn("sign")(function* sign(
     payload: TestPayload,
     key: webcrypto.CryptoKey = pair.privateKey,
-    alg = "RS256",
-    kid = "k1"
+    alg?: string,
+    kid?: string
   ) {
-    const head = Buffer.from(JSON.stringify({ alg, kid })).toString(
-      "base64url"
-    );
+    const head = Buffer.from(
+      JSON.stringify({ alg: alg ?? "RS256", kid: kid ?? "k1" })
+    ).toString("base64url");
 
     const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
 

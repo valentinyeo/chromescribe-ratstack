@@ -69,7 +69,10 @@ const integerParameter = (value: string | null, fallback: number) => {
   return Number.isNaN(parsed) ? fallback : parsed;
 };
 
-const listResponse = Effect.fn("listResponse")(function* listResponse(request: Request, params: URLSearchParams) {
+const listResponse = Effect.fn("listResponse")(function* listResponse(
+  request: Request,
+  params: URLSearchParams
+) {
   const around = params.get("around");
 
   if (around !== null && around !== "") {
@@ -134,11 +137,16 @@ const readResponse = Effect.fn("readResponse")(function* readResponse(
     const id = Number(transcriptMatch.groups?.id);
 
     if (transcriptMatch.groups?.source !== undefined) {
-      const markdown = yield* getTranscriptContent.handler({ id });
-      const source = extractSourceUrl(markdown);
+      const source = yield* getTranscriptContent.handler({ id }).pipe(
+        Effect.map(extractSourceUrl),
+        Effect.catchTag(
+          ["TranscriptNotFound", "TranscriptContentNotFound"],
+          () => Effect.succeed(null)
+        )
+      );
 
       return source === null
-        ? missing("Source not found")
+        ? new Response("Source not found", { status: 404 })
         : Response.redirect(source, 302);
     }
 

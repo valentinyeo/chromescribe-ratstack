@@ -51,7 +51,7 @@ const decodeResponse = <
     Effect.flatMap(Schema.decodeUnknownEffect(schema))
   );
 
-const fixture = Effect.fn("fixture")(function* fixture(gate = "0") {
+const fixture = Effect.fn("fixture")(function* fixture(gate?: string) {
   const db = yield* Effect.acquireRelease(
     Effect.sync(() => {
       const database = new DatabaseSync(":memory:");
@@ -120,7 +120,7 @@ const fixture = Effect.fn("fixture")(function* fixture(gate = "0") {
     Layer.mergeAll(
       d1TranscriptLayer(DB),
       content,
-      accessVerifierLayer({ CHRO10_API_GATE: gate })
+      accessVerifierLayer({ CHRO10_API_GATE: gate ?? "0" })
     )
   );
 
@@ -181,7 +181,12 @@ it.effect("serves bounded formatted pages, filters and conditional ETags", () =>
       )).data.map((row) => row.id)
     ).toEqual([1]);
     expect((yield* call("/api/transcripts?limit=abc")).status).toBe(200);
-    expect((yield* decodeResponse(ListBody, yield* call("/api/transcripts?limit=1tail"))).data).toHaveLength(1);
+    expect(
+      (yield* decodeResponse(
+        ListBody,
+        yield* call("/api/transcripts?limit=1tail")
+      )).data
+    ).toHaveLength(1);
   })
 );
 
@@ -201,6 +206,12 @@ it.effect(
       expect(source.status).toBe(302);
       expect(source.headers.get("Location")).toBe(
         "https://example.com/article"
+      );
+
+      const noSource = yield* call("/api/transcripts/3/source");
+
+      expect(yield* Effect.promise(() => noSource.text())).toBe(
+        "Source not found"
       );
 
       for (const path of [

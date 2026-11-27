@@ -30,10 +30,11 @@ export const getTranscriptAround = implement(
 
 export const getTranscriptContent = implement(
   getTranscriptContentContract,
-  Effect.fn("getTranscriptContent")(function* getTranscriptContent({ id }) {
+  Effect.fn("getTranscriptContent")(function* getTranscriptContent({ id }: { readonly id: number }) {
     const repository = yield* TranscriptRepository;
     const content = yield* TranscriptContentStore;
     const transcript = yield* repository.getById(id);
+
     return yield* content.readMarkdown(transcript.srt_path);
   })
 );

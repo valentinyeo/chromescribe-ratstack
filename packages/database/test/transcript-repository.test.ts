@@ -1,5 +1,6 @@
-// @effect-diagnostics nodeBuiltinImport:off -- This adapter seam uses real in-memory SQLite and reads the immutable schema baseline.
+// @effect-diagnostics-next-line nodeBuiltinImport:off -- This adapter seam reads its immutable fixture schema and uses the host runtime.
 import { readFileSync } from "node:fs";
+// @effect-diagnostics-next-line nodeBuiltinImport:off -- This adapter seam reads its immutable fixture schema and uses the host runtime.
 import { DatabaseSync } from "node:sqlite";
 
 import {
@@ -20,13 +21,15 @@ const sqliteLayer = Layer.unwrap(
         connection.exec(
           readFileSync(
             new URL("../baseline/chromescribe/schema.sql", import.meta.url),
-            "utf8"
+            "utf-8"
           )
         );
+
         const insert = connection.prepare(
           "INSERT INTO transcripts(id, video_id, title, channel, duration, srt_path, category, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         );
-        for (let id = 1; id <= 520; id += 1)
+
+        for (let id = 1; id <= 520; id += 1) {
           insert.run(
             id,
             `video-${id}`,
@@ -37,10 +40,15 @@ const sqliteLayer = Layer.unwrap(
             id % 2 ? "Health" : "AI",
             "2025-05-05 05:05:05"
           );
+        }
         return connection;
       }),
-      (connection) => Effect.sync(() => connection.close())
+      (connection) =>
+        Effect.sync(() => {
+          connection.close();
+        })
     );
+
     return transcriptRepositoryLayer({
       query: (sql, params) =>
         Effect.try({

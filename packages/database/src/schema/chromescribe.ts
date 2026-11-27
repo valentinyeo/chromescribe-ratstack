@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import {
   check,
   index,
@@ -25,7 +25,7 @@ export const transcripts = sqliteTable(
   },
   (table) => [
     index("idx_video_id").on(table.videoId),
-    index("idx_created_at").on(table.createdAt.desc()),
+    index("idx_created_at").on(desc(table.createdAt)),
     index("idx_title").on(table.title),
     index("idx_category").on(table.category),
   ]

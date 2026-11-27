@@ -3,6 +3,7 @@ import { Clock, Effect, Layer, Ref, Schema } from "effect";
 import { FetchHttpClient, HttpClient, HttpClientResponse } from "effect/http";
 
 export const accessIssuer = "https://vwo-analyzer.cloudflareaccess.com";
+
 export const accessCertsUrl = `${accessIssuer}/cdn-cgi/access/certs`;
 
 export interface AccessSettings {
@@ -15,12 +16,14 @@ const JwtHeader = Schema.Struct({
   alg: Schema.Literal("RS256"),
   kid: Schema.String,
 });
+
 const JwtPayload = Schema.Struct({
   aud: Schema.Union([Schema.String, Schema.Array(Schema.String)]),
   iss: Schema.Literal(accessIssuer),
   exp: Schema.Finite,
   nbf: Schema.optionalKey(Schema.Finite),
 });
+
 const Jwks = Schema.Struct({
   keys: Schema.Array(
     Schema.Struct({
@@ -31,9 +34,10 @@ const Jwks = Schema.Struct({
     })
   ),
 });
+
 const algorithm = { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" };
 
-class AccessVerificationError extends Schema.TaggedError<AccessVerificationError>()(
+class AccessVerificationError extends Schema.TaggedError<AccessVerificationError, { readonly brand: unique symbol }>()(
   "AccessVerificationError",
   { cause: Schema.Defect() }
 ) {}
@@ -46,37 +50,51 @@ const verifyAssertion = Effect.fn("AccessVerifier.verifyAssertion")(
   ) {
     const parts = assertion.split(".");
     const [head, body, signature] = parts;
-    if (parts.length !== 3 || !head || !body || !signature) return false;
-    const headerJson = yield* Schema.decodeUnknownEffect(
+
+    if (parts.length !== 3 || !head || !body || !signature) {
+      return false;
+    }
+    const headerJson = yield* Schema.decodeEffect(
       Schema.StringFromBase64Url
     )(head);
-    const payloadJson = yield* Schema.decodeUnknownEffect(
+
+    const payloadJson = yield* Schema.decodeEffect(
       Schema.StringFromBase64Url
     )(body);
-    const header = yield* Schema.decodeUnknownEffect(
+
+    const header = yield* Schema.decodeEffect(
       Schema.fromJsonString(JwtHeader)
     )(headerJson);
-    const payload = yield* Schema.decodeUnknownEffect(
+
+    const payload = yield* Schema.decodeEffect(
       Schema.fromJsonString(JwtPayload)
     )(payloadJson);
+
     const audiences = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
     const now = yield* Clock.currentTimeMillis;
+
     if (
       !audiences.includes(audience) ||
       payload.exp * 1000 <= now ||
       (payload.nbf !== undefined && payload.nbf * 1000 > now)
-    )
+    ) {
       return false;
+    }
     const jwk = keys.keys.find((key) => key.kid === header.kid);
-    if (!jwk) return false;
+
+    if (!jwk) {
+      return false;
+    }
     const key = yield* Effect.tryPromise({
       try: () =>
         crypto.subtle.importKey("jwk", jwk, algorithm, false, ["verify"]),
       catch: (cause) => new AccessVerificationError({ cause }),
     });
-    const bytes = yield* Schema.decodeUnknownEffect(
+
+    const bytes = yield* Schema.decodeEffect(
       Schema.Uint8ArrayFromBase64Url
     )(signature);
+
     return yield* Effect.tryPromise({
       try: () =>
         crypto.subtle.verify(
@@ -95,18 +113,26 @@ export const accessVerifierLayer = (settings: AccessSettings) =>
     AccessVerifier,
     Effect.gen(function* makeAccessVerifier() {
       const client = yield* HttpClient.HttpClient;
+
       const fetchKeys = client
         .get(settings.ACCESS_CERTS_URL || accessCertsUrl)
         .pipe(
           Effect.flatMap(HttpClientResponse.filterStatusOk),
           Effect.flatMap(HttpClientResponse.schemaBodyJson(Jwks))
         );
-      const cache = yield* Ref.make<{ readonly keys: typeof Jwks.Type; readonly expires: number } | null>(null);
+
+      const cache = yield* Ref.make<{
+        readonly keys: typeof Jwks.Type;
+        readonly expires: number;
+      } | null>(null);
+
       const getKeys = Effect.gen(function* getKeys() {
         const now = yield* Clock.currentTimeMillis;
         const cached = yield* Ref.get(cache);
 
-        if (cached && cached.expires > now) return cached.keys;
+        if (cached && cached.expires > now) {
+          return cached.keys;
+        }
 
         const keys = yield* fetchKeys;
         const completed = yield* Clock.currentTimeMillis;
@@ -120,14 +146,19 @@ export const accessVerifierLayer = (settings: AccessSettings) =>
         verify: Effect.fn("AccessVerifier.verify")(function* verify(
           assertion: string | null
         ) {
-          if (settings.CHRO10_API_GATE === "0") return true;
+          if (settings.CHRO10_API_GATE === "0") {
+            return true;
+          }
           const audience = settings.ACCESS_AUD?.trim();
-          if (!assertion || !audience) return false;
+
+          if (!assertion || !audience) {
+            return false;
+          }
           return yield* getKeys.pipe(
             Effect.flatMap((keys) =>
               verifyAssertion(assertion, audience, keys)
             ),
-            Effect.catch(() => Effect.succeed(false))
+            Effect.orElseSucceed(() => false)
           );
         }),
       });
@@ -136,11 +167,13 @@ export const accessVerifierLayer = (settings: AccessSettings) =>
 
 export const accessGate = Effect.fn("accessGate")(function* accessGate(
   request: Request
-) {
+): Effect.fn.Return<Response | null, never, AccessVerifier> {
   const verifier = yield* AccessVerifier;
+
   const allowed = yield* verifier.verify(
     request.headers.get("Cf-Access-Jwt-Assertion")
   );
+
   return allowed
     ? null
     : Response.json(

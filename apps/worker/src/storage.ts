@@ -53,13 +53,18 @@ export const r2ContentLayer = (bucket: TranscriptBucket) => {
       catch: (cause) =>
         new TranscriptStorageError({ cause, operation: "r2.get" }),
     });
-    if (!object) return yield* new TranscriptContentNotFound({ key });
+
+    if (!object) {
+      return yield* new TranscriptContentNotFound({ key });
+    }
     return object;
   });
+
   return Layer.succeed(TranscriptContentStore, {
     readMarkdown: Effect.fn("TranscriptContentStore.readMarkdown")(
       function* readMarkdown(key: string) {
         const object = yield* read(key);
+
         return yield* Effect.tryPromise({
           try: () => object.text(),
           catch: (cause) =>
@@ -70,13 +75,15 @@ export const r2ContentLayer = (bucket: TranscriptBucket) => {
     getThumbnail: Effect.fn("TranscriptContentStore.getThumbnail")(
       function* getThumbnail(videoId: string) {
         const object = yield* read(
-          `thumbs/${videoId.replace(/[^a-zA-Z0-9_:-]/gu, "_")}.jpg`
+          `thumbs/${videoId.replaceAll(/[^a-zA-Z0-9_:-]/gu, "_")}.jpg`
         );
+
         const buffer = yield* Effect.tryPromise({
           try: () => object.arrayBuffer(),
           catch: (cause) =>
             new TranscriptStorageError({ cause, operation: "r2.arrayBuffer" }),
         });
+
         return {
           bytes: new Uint8Array(buffer),
           contentType: object.httpMetadata?.contentType || "image/jpeg",

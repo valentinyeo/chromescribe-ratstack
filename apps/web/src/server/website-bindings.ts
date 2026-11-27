@@ -10,6 +10,7 @@ export const routeWebsiteRequest = (
   render: (request: Request) => Promise<Response>
 ) => {
   const path = new URL(request.url).pathname;
+
   if (
     path === "/rpc" ||
     path.startsWith("/api/") ||
@@ -17,5 +18,6 @@ export const routeWebsiteRequest = (
   ) {
     return bindings.RPC_BACKEND.fetch(request);
   }
+
   return render(request);
 };

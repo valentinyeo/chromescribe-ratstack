@@ -1,7 +1,7 @@
+import type { TranscriptListInput } from "@chromescribe/core";
 import {
   CategoryCount,
   TranscriptDetail,
-  TranscriptListInput,
   TranscriptNotFound,
   TranscriptRepository,
   TranscriptStorageError,
@@ -18,8 +18,11 @@ export interface TranscriptSql {
 
 const listColumns =
   "id, video_id, title, channel, duration, word_count, created_at, category, tags";
+
 const detailColumns = `${listColumns}, srt_path, thumbnail_url`;
+
 const Count = Schema.Struct({ total: Schema.Int });
+
 const Id = Schema.Struct({ id: Schema.Int });
 
 export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
@@ -29,6 +32,7 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
       params: readonly (string | number | null)[]
     ) {
       const rows = yield* sql.query(statement, params);
+
       return yield* Schema.decodeUnknownEffect(Schema.Array(TranscriptSummary))(
         rows
       ).pipe(
@@ -39,11 +43,13 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
       );
     }
   );
+
   const details = Effect.fn("TranscriptRepository.details")(function* details(
     statement: string,
     params: readonly (string | number | null)[]
   ) {
     const rows = yield* sql.query(statement, params);
+
     return yield* Schema.decodeUnknownEffect(Schema.Array(TranscriptDetail))(
       rows
     ).pipe(
@@ -53,6 +59,7 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
       )
     );
   });
+
   const count = Effect.fn("TranscriptRepository.count")(function* count(
     where: string,
     params: readonly (string | number | null)[]
@@ -61,6 +68,7 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
       `SELECT COUNT(*) AS total FROM transcripts ${where}`,
       params
     );
+
     const result = yield* Schema.decodeUnknownEffect(
       Schema.NonEmptyArray(Count)
     )(rows).pipe(
@@ -68,8 +76,10 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
         (cause) => new TranscriptStorageError({ cause, operation: "count" })
       )
     );
+
     return result[0].total;
   });
+
   const getById = Effect.fn("TranscriptRepository.getById")(function* getById(
     id: number
   ) {
@@ -77,10 +87,15 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
       `SELECT ${detailColumns} FROM transcripts WHERE id = ? LIMIT 1`,
       [id]
     );
+
     const row = rows[0];
-    if (!row) return yield* new TranscriptNotFound({ id });
+
+    if (!row) {
+      return yield* new TranscriptNotFound({ id });
+    }
     return row;
   });
+
   const neighbour = Effect.fn("TranscriptRepository.neighbour")(
     function* neighbour(
       where: string,
@@ -91,6 +106,7 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
         `SELECT id FROM transcripts WHERE ${where} ORDER BY created_at ${order}, id ${order} LIMIT 1`,
         params
       );
+
       const decoded = yield* Schema.decodeUnknownEffect(Schema.Array(Id))(
         rows
       ).pipe(
@@ -99,6 +115,7 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
             new TranscriptStorageError({ cause, operation: "neighbour" })
         )
       );
+
       return decoded[0]?.id ?? null;
     }
   );
@@ -111,20 +128,26 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
       const offset = Math.max(0, Math.trunc(input.offset ?? 0));
       const clauses: string[] = [];
       const params: (string | number)[] = [];
+
       if (input.videoId) {
         clauses.push("video_id = ?");
         params.push(input.videoId);
       }
+
       if (input.channel) {
         clauses.push("channel = ?");
         params.push(input.channel);
       }
+
       const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+
       const data = yield* summaries(
         `SELECT ${listColumns} FROM transcripts ${where} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
         [...params, limit, offset]
       );
+
       const total = yield* count(where, params);
+
       return { data, total };
     }),
     getById,
@@ -139,6 +162,7 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
       const next = yield* neighbour(older, "DESC", params);
       const index = yield* count(`WHERE ${newer}`, params);
       const total = yield* count("", []);
+
       return { prev, next, index, total };
     }),
     findByVideoId: (videoId) =>
@@ -157,6 +181,7 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
           "SELECT category, COUNT(*) AS count FROM transcripts WHERE category IS NOT NULL AND category != '' GROUP BY category ORDER BY count DESC, category ASC LIMIT 500",
           []
         );
+
         return yield* Schema.decodeUnknownEffect(Schema.Array(CategoryCount))(
           rows
         ).pipe(

@@ -46,17 +46,17 @@ export const TranscriptListInput = Schema.Struct({
   channel: Schema.optionalKey(Schema.String),
 });
 
-export class TranscriptNotFound extends Schema.TaggedError<TranscriptNotFound>()(
+export class TranscriptNotFound extends Schema.TaggedError<TranscriptNotFound, { readonly brand: unique symbol }>()(
   "TranscriptNotFound",
   { id: Schema.Int }
 ) {}
 
-export class TranscriptStorageError extends Schema.TaggedError<TranscriptStorageError>()(
+export class TranscriptStorageError extends Schema.TaggedError<TranscriptStorageError, { readonly brand: unique symbol }>()(
   "TranscriptStorageError",
   { operation: Schema.String, cause: Schema.Defect() }
 ) {}
 
-export class TranscriptContentNotFound extends Schema.TaggedError<TranscriptContentNotFound>()(
+export class TranscriptContentNotFound extends Schema.TaggedError<TranscriptContentNotFound, { readonly brand: unique symbol }>()(
   "TranscriptContentNotFound",
   { key: Schema.String }
 ) {}
@@ -132,12 +132,14 @@ export class TranscriptContentStore extends Context.Service<
     Layer.succeed(TranscriptContentStore, {
       readMarkdown: (key) => {
         const content = markdown.get(key);
+
         return content === undefined
           ? Effect.fail(new TranscriptContentNotFound({ key }))
           : Effect.succeed(content);
       },
       getThumbnail: (key) => {
         const content = thumbnails.get(key);
+
         return content === undefined
           ? Effect.fail(new TranscriptContentNotFound({ key }))
           : Effect.succeed(content);

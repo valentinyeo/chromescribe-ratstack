@@ -20,10 +20,15 @@
           "effect/http/HttpClient",
           "effect/http/HttpClientResponse",
           "effect/rpc/RpcSerialization",
-          "effect/rpc/RpcServer"
+          "effect/rpc/RpcServer",
+          "effect/testing/TestClock"
         ]
       }
     ]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "scripts/**/*.ts"
+  ]
 }

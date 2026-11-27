@@ -13,27 +13,37 @@ export interface WorkerBindings extends AccessSettings {
   readonly TRANSCRIPTS: TranscriptBucket;
 }
 
-const servers = new WeakMap<WorkerBindings, ReturnType<typeof transcriptServer>>();
+const servers = new WeakMap<
+  WorkerBindings,
+  ReturnType<typeof transcriptServer>
+>();
 
 const publicReport = Effect.fn("publicReport")(function* publicReport(
   bucket: TranscriptBucket,
   id: string
 ) {
   const object = yield* Effect.promise(() => bucket.get(`reports/${id}.html`));
-  if (!object) return new Response("Report not found", { status: 404 });
+
+  if (!object) {
+    return new Response("Report not found", { status: 404 });
+  }
   const html = yield* Effect.promise(() => object.text());
+
   return new Response(html, {
     headers: { "Content-Type": "text/html; charset=utf-8" },
   });
 });
 
-export const handleRequest = (request: Request, env: WorkerBindings) => {
+export const handleRequest = (request: Request, env: WorkerBindings): Promise<Response> => {
   const report = /^\/reports\/([a-f0-9]{12})$/u.exec(
     new URL(request.url).pathname
   );
-  if (request.method === "GET" && report?.[1])
+
+  if (request.method === "GET" && report?.[1]) {
     return Effect.runPromise(publicReport(env.TRANSCRIPTS, report[1]));
+  }
   let server = servers.get(env);
+
   if (!server) {
     server = transcriptServer(
       Layer.mergeAll(
@@ -44,10 +54,11 @@ export const handleRequest = (request: Request, env: WorkerBindings) => {
     );
     servers.set(env, server);
   }
+
   return server.handler(request);
 };
 
 export default {
-  fetch: (request: Request, env: Workers.InferEnv<typeof ChromeScribeWorker>) =>
+  fetch: (request: Request, env: Workers.InferEnv<typeof ChromeScribeWorker>): Promise<Response> =>
     handleRequest(request, env),
 };

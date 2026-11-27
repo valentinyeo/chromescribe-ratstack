@@ -16,12 +16,16 @@ import { HttpApiBuilder } from "effect/http-api";
 import { RpcSerialization, RpcServer } from "effect/rpc";
 
 import { accessGate } from "./access-gate.js";
+import { health } from "./health.js";
 import { transcriptHttp } from "./transcript-http.js";
 
-export const rpc = toRpc(transcriptCapabilities);
+const capabilities = [health, ...transcriptCapabilities] as const;
+
+export const rpc = toRpc(capabilities);
+
 export const http = toHttpApi(
   "ChromeScribeTranscripts",
-  transcriptCapabilities
+  capabilities
 );
 
 const compatibility = HttpRouter.add(
@@ -31,6 +35,7 @@ const compatibility = HttpRouter.add(
     const incoming = yield* HttpServerRequest.HttpServerRequest;
     const request = yield* HttpServerRequest.toWeb(incoming);
     const response = yield* transcriptHttp(request);
+
     return HttpServerResponse.fromWeb(response);
   })
 );
@@ -41,7 +46,10 @@ const gate = HttpRouter.middleware(
       const incoming = yield* HttpServerRequest.HttpServerRequest;
       const request = yield* HttpServerRequest.toWeb(incoming);
       const denied = yield* accessGate(request);
-      if (denied) return HttpServerResponse.fromWeb(denied);
+
+      if (denied) {
+        return HttpServerResponse.fromWeb(denied);
+      }
       return yield* httpEffect;
     }),
   { global: true }
@@ -64,6 +72,7 @@ export const transcriptServer = (
       Layer.provide(RpcSerialization.layerJson)
     ),
     gate
-  ).pipe(Layer.provide(services), Layer.provide(HttpServer.layerServices));
+  ).pipe(Layer.provideMerge(services), Layer.provideMerge(HttpServer.layerServices));
+
   return HttpRouter.toWebHandler(routes, { disableLogger: true });
 };

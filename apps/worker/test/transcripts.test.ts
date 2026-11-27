@@ -1,5 +1,6 @@
-// @effect-diagnostics nodeBuiltinImport:off -- Worker compatibility is tested with real SQLite using the retained production schema.
+// @effect-diagnostics-next-line nodeBuiltinImport:off -- This adapter seam reads its immutable fixture schema and uses the host runtime.
 import { readFileSync } from "node:fs";
+// @effect-diagnostics-next-line nodeBuiltinImport:off -- This adapter seam reads its immutable fixture schema and uses the host runtime.
 import { DatabaseSync } from "node:sqlite";
 
 import { TranscriptContentStore } from "@chromescribe/core";
@@ -31,6 +32,7 @@ const ListBody = Schema.Struct({
     })
   ),
 });
+
 const NavigationBody = Schema.Struct({
   data: Schema.Struct({
     prev: Schema.NullOr(Schema.Int),
@@ -39,6 +41,7 @@ const NavigationBody = Schema.Struct({
     total: Schema.Int,
   }),
 });
+
 const decodeResponse = <
   S extends Schema.Top & { readonly DecodingServices: never },
 >(
@@ -59,13 +62,15 @@ const fixture = Effect.fn("fixture")(function* fixture(gate = "0") {
             "../../../packages/database/baseline/chromescribe/schema.sql",
             import.meta.url
           ),
-          "utf8"
+          "utf-8"
         )
       );
+
       const insert = database.prepare(
         "INSERT INTO transcripts(id, video_id, title, channel, duration, srt_path, category, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
       );
-      for (let id = 1; id <= 7; id += 1)
+
+      for (let id = 1; id <= 7; id += 1) {
         insert.run(
           id,
           `video-${id}`,
@@ -76,10 +81,15 @@ const fixture = Effect.fn("fixture")(function* fixture(gate = "0") {
           "AI",
           "2025-05-05 05:05:05"
         );
+      }
       return database;
     }),
-    (database) => Effect.sync(() => database.close())
+    (database) =>
+      Effect.sync(() => {
+        database.close();
+      })
   );
+
   const DB = {
     prepare: (sql: string) => ({
       bind: (...params: (string | number | null)[]) => ({
@@ -87,6 +97,7 @@ const fixture = Effect.fn("fixture")(function* fixture(gate = "0") {
       }),
     }),
   };
+
   const markdown = new Map([
     [
       "content/4.md",
@@ -94,6 +105,7 @@ const fixture = Effect.fn("fixture")(function* fixture(gate = "0") {
     ],
     ["content/3.md", "No source"],
   ]);
+
   const content = TranscriptContentStore.memory(
     markdown,
     new Map([
@@ -103,6 +115,7 @@ const fixture = Effect.fn("fixture")(function* fixture(gate = "0") {
       ],
     ])
   );
+
   const server = transcriptServer(
     Layer.mergeAll(
       d1TranscriptLayer(DB),
@@ -110,13 +123,16 @@ const fixture = Effect.fn("fixture")(function* fixture(gate = "0") {
       accessVerifierLayer({ CHRO10_API_GATE: gate })
     )
   );
+
   yield* Effect.addFinalizer(() => Effect.promise(server.dispose));
+
   const call = (path: string, init?: RequestInit) =>
     Effect.promise(() =>
       server.handler(
         new Request(`https://next.chromescribe.yeoux.net${path}`, init)
       )
     );
+
   return { call, DB };
 });
 
@@ -132,9 +148,11 @@ it.effect("serves bounded formatted pages, filters and conditional ETags", () =>
     const etag = first.headers.get("ETag");
     expect(etag).toMatch(/^"[a-f0-9]{64}"$/u);
     expect(first.headers.get("Cache-Control")).toBe("private, no-cache");
+
     const again = yield* call("/api/transcripts?limit=3", {
       headers: { "If-None-Match": `W/${etag}` },
     });
+
     expect(again.status).toBe(304);
     expect(yield* Effect.promise(() => again.text())).toBe("");
     expect(
@@ -170,14 +188,16 @@ it.effect(
       expect(source.headers.get("Location")).toBe(
         "https://example.com/article"
       );
+
       for (const path of [
         "/api/transcripts/99",
         "/api/transcripts/99/source",
         "/api/transcript/99/content",
         "/api/transcript/2/content",
         "/api/transcripts/3/source",
-      ])
+      ]) {
         expect((yield* call(path)).status).toBe(404);
+      }
     })
 );
 
@@ -216,39 +236,49 @@ it.effect(
   () =>
     Effect.gen(function* projections() {
       const { call } = yield* fixture();
+
       const generated = yield* call("/getTranscript", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: 4 }),
       });
+
       expect(generated.status).toBe(200);
       expect(yield* Effect.promise(() => generated.text())).toContain(
         '"title":"Title 4"'
       );
+
       const rpc = yield* call("/rpc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(RpcRequest.make({
-          id: "1",
-          tag: "getTranscript",
-          payload: { id: 4 },
-          headers: [],
-        })),
+        body: JSON.stringify(
+          RpcRequest.make({
+            id: "1",
+            tag: "getTranscript",
+            payload: { id: 4 },
+            headers: [],
+          })
+        ),
       });
+
       expect(rpc.status).toBe(200);
       expect(yield* Effect.promise(() => rpc.text())).toContain(
         '"title":"Title 4"'
       );
+
       const invalid = yield* call("/rpc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(RpcRequest.make({
-          id: "2",
-          tag: "getTranscript",
-          payload: { id: "invalid" },
-          headers: [],
-        })),
+        body: JSON.stringify(
+          RpcRequest.make({
+            id: "2",
+            tag: "getTranscript",
+            payload: { id: "invalid" },
+            headers: [],
+          })
+        ),
       });
+
       expect(yield* Effect.promise(() => invalid.text())).toContain(
         '"Failure"'
       );
@@ -260,6 +290,7 @@ it.effect(
   () =>
     Effect.gen(function* security() {
       const { call } = yield* fixture("1");
+
       for (const path of [
         "/api/health",
         "/api/transcripts",
@@ -270,7 +301,9 @@ it.effect(
         expect(response.status).toBe(401);
         expect(response.headers.has("Access-Control-Allow-Origin")).toBe(false);
       }
+
       const open = yield* fixture();
+
       for (const method of ["POST", "DELETE", "PATCH", "OPTIONS"]) {
         const response = yield* open.call("/api/transcripts/4", { method });
         expect(response.status).not.toBe(200);
@@ -284,6 +317,7 @@ it.effect(
   () =>
     Effect.gen(function* publicReports() {
       const { DB } = yield* fixture("1");
+
       const report = yield* Effect.promise(() =>
         handleRequest(
           new Request(
@@ -301,16 +335,19 @@ it.effect(
           }
         )
       );
+
       expect(report.status).toBe(200);
       expect(report.headers.has("Access-Control-Allow-Origin")).toBe(false);
+
       for (const value of [
         "javascript:alert(1)",
         "//example.com",
         "https://",
         "https://example.com extra",
         "file:///tmp/a",
-      ])
+      ]) {
         expect(extractSourceUrl(`**Source:** ${value}`)).toBeNull();
+      }
       expect(
         extractSourceUrl("**Source:** https://example.com/a?q=1#x\r\n")
       ).toBe("https://example.com/a?q=1#x");

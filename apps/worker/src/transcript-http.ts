@@ -7,9 +7,11 @@ import {
   listTranscripts,
   searchTranscripts,
 } from "@chromescribe/core";
-import type { TranscriptSummary } from "@chromescribe/core";
+import type { TranscriptSummary, TranscriptRepository, TranscriptContentStore } from "@chromescribe/core";
 import { DateTime, Effect, Option, Schema } from "effect";
 import * as Digest from "effect/crypto/Digest";
+
+import { health } from "./health.js";
 
 const json = (data: Schema.Json) => Response.json({ success: true, data });
 const missing = (error: string, status = 404) =>
@@ -61,7 +63,7 @@ const readResponse = Effect.fn("readResponse")(function* readResponse(
   const url = new URL(request.url);
   const path = url.pathname;
   if (path === "/api/health")
-    return json({ status: "ok", runtime: "cloudflare-worker" });
+    return json(yield* health.handler({}));
   if (path === "/api/transcripts" || path === "/api/") {
     const around = url.searchParams.get("around");
     if (around)
@@ -132,7 +134,7 @@ const readResponse = Effect.fn("readResponse")(function* readResponse(
   return missing("Endpoint not found");
 });
 
-export const transcriptHttp = (request: Request) =>
+export const transcriptHttp = (request: Request): Effect.Effect<Response, never, TranscriptRepository | TranscriptContentStore> =>
   readResponse(request).pipe(
     Effect.catchTags({
       TranscriptNotFound: () => Effect.succeed(missing("Transcript not found")),

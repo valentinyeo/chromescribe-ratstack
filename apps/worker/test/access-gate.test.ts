@@ -1,6 +1,8 @@
+import { AccessVerifier } from "@chromescribe/core";
 import { expect, it } from "@effect/vitest";
 import { Clock, Effect } from "effect";
 import { FetchHttpClient } from "effect/http";
+import { TestClock } from "effect/testing";
 
 import {
   accessGate,
@@ -67,7 +69,7 @@ const fixture = Effect.fn("fixture")(function* fixture() {
         Promise.resolve(Response.json({ keys: [{ ...jwk, kid: "k1" }] }))
       )
     );
-  return { pair, other, good, sign, gate, now };
+  return { pair, other, good, sign, gate, now, jwk };
 });
 
 it.effect(
@@ -149,3 +151,30 @@ it.effect(
       expect(denied?.status).toBe(401);
     })
 );
+
+it.effect("reuses only completed JWKS results and refreshes after ten minutes", () => Effect.gen(function* cache() {
+  const { good, sign, jwk } = yield* fixture();
+  const token = yield* sign({ ...good, exp: good.exp + 3600 });
+  let fetches = 0;
+
+  yield* Effect.gen(function* verifyCached() {
+    const verifier = yield* AccessVerifier;
+
+    expect(yield* verifier.verify(token)).toBe(true);
+    expect(yield* verifier.verify(token)).toBe(true);
+    expect(fetches).toBe(1);
+    yield* TestClock.adjust("9 minutes");
+    expect(yield* verifier.verify(token)).toBe(true);
+    expect(fetches).toBe(1);
+    yield* TestClock.adjust("1 minute");
+    expect(yield* verifier.verify(token)).toBe(true);
+    expect(fetches).toBe(2);
+  }).pipe(
+    Effect.provide(accessVerifierLayer(on)),
+    Effect.provideService(FetchHttpClient.Fetch, () => {
+      fetches += 1;
+
+      return Promise.resolve(Response.json({ keys: [{ ...jwk, kid: "k1" }] }));
+    })
+  );
+}));

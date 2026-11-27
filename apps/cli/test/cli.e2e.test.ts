@@ -83,6 +83,21 @@ const mcpConversation = async (
       reject(new Error(`mcp timed out with stdout: ${buffer}`));
     }, 15_000);
 
+    const pending = [...messages];
+    const sendNext = () => {
+      let message = pending.shift();
+
+      while (message !== undefined) {
+        child.stdin.write(`${JSON.stringify(message)}\n`);
+
+        if ("id" in message) {
+          return;
+        }
+
+        message = pending.shift();
+      }
+    };
+
     child.stdout.setEncoding("utf-8");
     child.stdout.on("data", (chunk: string) => {
       buffer += chunk;
@@ -98,6 +113,7 @@ const mcpConversation = async (
 
         if (message.id !== undefined) {
           responses.push(message);
+          sendNext();
         }
       }
 
@@ -109,9 +125,7 @@ const mcpConversation = async (
     });
     child.on("error", reject);
 
-    for (const message of messages) {
-      child.stdin.write(`${JSON.stringify(message)}\n`);
-    }
+    sendNext();
   });
 
 describe("built CLI", () => {

@@ -69,43 +69,85 @@ export const TranscriptFailure = Schema.Union([
 
 export type TranscriptFailure = typeof TranscriptFailure.Type;
 
-export class TranscriptRepository extends Context.Service<TranscriptRepository, {
-  readonly list: (input: typeof TranscriptListInput.Type) => Effect.Effect<typeof TranscriptListResult.Type, TranscriptStorageError>;
-  readonly getById: (id: number) => Effect.Effect<TranscriptDetail, TranscriptNotFound | TranscriptStorageError>;
-  readonly getAround: (id: number) => Effect.Effect<typeof TranscriptAround.Type, TranscriptNotFound | TranscriptStorageError>;
-  readonly findByVideoId: (videoId: string) => Effect.Effect<readonly TranscriptDetail[], TranscriptStorageError>;
-  readonly search: (query: string) => Effect.Effect<readonly TranscriptDetail[], TranscriptStorageError>;
-  readonly listCategories: () => Effect.Effect<readonly (typeof CategoryCount.Type)[], TranscriptStorageError>;
-}>()("@chromescribe/core/TranscriptRepository") {}
+export class TranscriptRepository extends Context.Service<
+  TranscriptRepository,
+  {
+    readonly list: (
+      input: typeof TranscriptListInput.Type
+    ) => Effect.Effect<
+      typeof TranscriptListResult.Type,
+      TranscriptStorageError
+    >;
+    readonly getById: (
+      id: number
+    ) => Effect.Effect<
+      TranscriptDetail,
+      TranscriptNotFound | TranscriptStorageError
+    >;
+    readonly getAround: (
+      id: number
+    ) => Effect.Effect<
+      typeof TranscriptAround.Type,
+      TranscriptNotFound | TranscriptStorageError
+    >;
+    readonly findByVideoId: (
+      videoId: string
+    ) => Effect.Effect<readonly TranscriptDetail[], TranscriptStorageError>;
+    readonly search: (
+      query: string
+    ) => Effect.Effect<readonly TranscriptDetail[], TranscriptStorageError>;
+    readonly listCategories: () => Effect.Effect<
+      readonly (typeof CategoryCount.Type)[],
+      TranscriptStorageError
+    >;
+  }
+>()("@chromescribe/core/TranscriptRepository") {}
 
 export interface TranscriptThumbnail {
   readonly bytes: Uint8Array<ArrayBuffer>;
   readonly contentType: string;
 }
 
-export class TranscriptContentStore extends Context.Service<TranscriptContentStore, {
-  readonly readMarkdown: (srtPath: string) => Effect.Effect<string, TranscriptContentNotFound | TranscriptStorageError>;
-  readonly getThumbnail: (videoId: string) => Effect.Effect<TranscriptThumbnail, TranscriptContentNotFound | TranscriptStorageError>;
-}>()("@chromescribe/core/TranscriptContentStore") {
+export class TranscriptContentStore extends Context.Service<
+  TranscriptContentStore,
+  {
+    readonly readMarkdown: (
+      srtPath: string
+    ) => Effect.Effect<
+      string,
+      TranscriptContentNotFound | TranscriptStorageError
+    >;
+    readonly getThumbnail: (
+      videoId: string
+    ) => Effect.Effect<
+      TranscriptThumbnail,
+      TranscriptContentNotFound | TranscriptStorageError
+    >;
+  }
+>()("@chromescribe/core/TranscriptContentStore") {
   static readonly memory = (
     markdown: ReadonlyMap<string, string>,
     thumbnails: ReadonlyMap<string, TranscriptThumbnail> = new Map()
-  ) => Layer.succeed(TranscriptContentStore, {
-    readMarkdown: (key) => {
-      const content = markdown.get(key);
-      return content === undefined
-        ? Effect.fail(new TranscriptContentNotFound({ key }))
-        : Effect.succeed(content);
-    },
-    getThumbnail: (key) => {
-      const content = thumbnails.get(key);
-      return content === undefined
-        ? Effect.fail(new TranscriptContentNotFound({ key }))
-        : Effect.succeed(content);
-    },
-  });
+  ) =>
+    Layer.succeed(TranscriptContentStore, {
+      readMarkdown: (key) => {
+        const content = markdown.get(key);
+        return content === undefined
+          ? Effect.fail(new TranscriptContentNotFound({ key }))
+          : Effect.succeed(content);
+      },
+      getThumbnail: (key) => {
+        const content = thumbnails.get(key);
+        return content === undefined
+          ? Effect.fail(new TranscriptContentNotFound({ key }))
+          : Effect.succeed(content);
+      },
+    });
 }
 
-export class AccessVerifier extends Context.Service<AccessVerifier, {
-  readonly verify: (assertion: string | null) => Effect.Effect<boolean>;
-}>()("@chromescribe/core/AccessVerifier") {}
+export class AccessVerifier extends Context.Service<
+  AccessVerifier,
+  {
+    readonly verify: (assertion: string | null) => Effect.Effect<boolean>;
+  }
+>()("@chromescribe/core/AccessVerifier") {}

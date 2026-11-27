@@ -27,21 +27,27 @@ export const getTranscriptContract = defineContract("getTranscript", {
   output: TranscriptDetail,
 });
 
-export const getTranscriptAroundContract = defineContract("getTranscriptAround", {
-  annotations: { idempotent: true, readOnly: true },
-  description: "Read the transcript's neighbours and position",
-  failure: TranscriptFailure,
-  input: Schema.Struct({ id: Schema.Int }),
-  output: TranscriptAround,
-});
+export const getTranscriptAroundContract = defineContract(
+  "getTranscriptAround",
+  {
+    annotations: { idempotent: true, readOnly: true },
+    description: "Read the transcript's neighbours and position",
+    failure: TranscriptFailure,
+    input: Schema.Struct({ id: Schema.Int }),
+    output: TranscriptAround,
+  }
+);
 
-export const getTranscriptContentContract = defineContract("getTranscriptContent", {
-  annotations: { idempotent: true, readOnly: true },
-  description: "Read the stored transcript markdown",
-  failure: TranscriptFailure,
-  input: Schema.Struct({ id: Schema.Int }),
-  output: Schema.String,
-});
+export const getTranscriptContentContract = defineContract(
+  "getTranscriptContent",
+  {
+    annotations: { idempotent: true, readOnly: true },
+    description: "Read the stored transcript markdown",
+    failure: TranscriptFailure,
+    input: Schema.Struct({ id: Schema.Int }),
+    output: Schema.String,
+  }
+);
 
 export const searchTranscriptsContract = defineContract("searchTranscripts", {
   annotations: { idempotent: true, readOnly: true },
@@ -59,13 +65,19 @@ export const listCategoriesContract = defineContract("listCategories", {
   output: Schema.Array(CategoryCount),
 });
 
-export const getTranscriptThumbnailContract = defineContract("getTranscriptThumbnail", {
-  annotations: { idempotent: true, readOnly: true },
-  description: "Read a cached transcript thumbnail",
-  failure: TranscriptFailure,
-  input: Schema.Struct({ videoId: Schema.String }),
-  output: Schema.Struct({ bytes: Schema.Uint8ArrayFromBase64, contentType: Schema.String }),
-});
+export const getTranscriptThumbnailContract = defineContract(
+  "getTranscriptThumbnail",
+  {
+    annotations: { idempotent: true, readOnly: true },
+    description: "Read a cached transcript thumbnail",
+    failure: TranscriptFailure,
+    input: Schema.Struct({ videoId: Schema.String }),
+    output: Schema.Struct({
+      bytes: Schema.Uint8ArrayFromBase64,
+      contentType: Schema.String,
+    }),
+  }
+);
 
 export { FileStatsError, FileStatsSchema } from "./stats.js";
 

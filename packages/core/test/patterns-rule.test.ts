@@ -532,7 +532,7 @@ describe("rat-stack pattern rules", () => {
     const primitive =
       'import { Context, Effect } from "effect";\n\nexport class Greeting extends Context.Service<Greeting, string>()("Greeting") {}\n\nexport const main = Effect.gen(function* greet() { return yield* Greeting; }).pipe(Effect.provideService(Greeting, "hi"));\n';
 
-    const snippet = lintFixture("packages/core/test", primitive);
+    const snippet = lintFixture(".brain/data/learn-cards", primitive);
 
     const runtime = lintFixture("packages/core/src", primitive);
 

@@ -33,9 +33,9 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
     ) {
       const rows = yield* sql.query(statement, params);
 
-      return yield* Schema.decodeUnknownEffect(Schema.Array(TranscriptSummarySchema))(
-        rows
-      ).pipe(
+      return yield* Schema.decodeUnknownEffect(
+        Schema.Array(TranscriptSummarySchema)
+      )(rows).pipe(
         Effect.mapError(
           (cause) =>
             new TranscriptStorageError({ cause, operation: "decodeSummary" })
@@ -50,9 +50,9 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
   ) {
     const rows = yield* sql.query(statement, params);
 
-    return yield* Schema.decodeUnknownEffect(Schema.Array(TranscriptDetailSchema))(
-      rows
-    ).pipe(
+    return yield* Schema.decodeUnknownEffect(
+      Schema.Array(TranscriptDetailSchema)
+    )(rows).pipe(
       Effect.mapError(
         (cause) =>
           new TranscriptStorageError({ cause, operation: "decodeDetail" })

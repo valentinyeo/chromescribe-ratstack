@@ -51,7 +51,15 @@ const verifyAssertion = Effect.fn("AccessVerifier.verifyAssertion")(
     const parts = assertion.split(".");
     const [head, body, signature] = parts;
 
-    if (parts.length !== 3 || head === undefined || head === "" || body === undefined || body === "" || signature === undefined || signature === "") {
+    if (
+      parts.length !== 3 ||
+      head === undefined ||
+      head === "" ||
+      body === undefined ||
+      body === "" ||
+      signature === undefined ||
+      signature === ""
+    ) {
       return false;
     }
 
@@ -155,7 +163,12 @@ export const accessVerifierLayer = (settings: AccessSettings) =>
 
           const audience = settings.ACCESS_AUD?.trim();
 
-          if (assertion === null || assertion === "" || audience === undefined || audience === "") {
+          if (
+            assertion === null ||
+            assertion === "" ||
+            audience === undefined ||
+            audience === ""
+          ) {
             return false;
           }
 

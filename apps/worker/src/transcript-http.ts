@@ -52,19 +52,66 @@ const listItem = (transcript: TranscriptSummary) => ({
 });
 
 export const extractSourceUrl = (markdown: string) => {
-  const source = /^\*\*Source:\*\*[ \t]+(?<source>https?:\/\/[^\s<>]+)[ \t]*\r?$/mu.exec(
-    markdown
-  )?.groups?.source;
+  const source =
+    /^\*\*Source:\*\*[ \t]+(?<source>https?:\/\/[^\s<>]+)[ \t]*\r?$/mu.exec(
+      markdown
+    )?.groups?.source;
 
-  return source !== undefined && URL.canParse(source) ? new URL(source).href : null;
+  return source !== undefined && URL.canParse(source)
+    ? new URL(source).href
+    : null;
 };
 
 const integerParameter = (value: string | null, fallback: number) => {
-  // oxlint-disable-next-line unicorn/prefer-math-trunc -- Legacy pagination intentionally accepts numeric prefixes.
+  // oxlint-disable-next-line unicorn/prefer-number-coercion -- Legacy pagination intentionally accepts numeric prefixes.
   const parsed = Number.parseInt(value ?? "", 10);
 
   return Number.isNaN(parsed) ? fallback : parsed;
 };
+
+const listResponse = Effect.fn("listResponse")(function* listResponse(request: Request, params: URLSearchParams) {
+  const around = params.get("around");
+
+  if (around !== null && around !== "") {
+    return json(
+      yield* getTranscriptAround.handler({ id: integerParameter(around, -1) })
+    );
+  }
+
+  const videoId = params.get("video_id");
+  const channel = params.get("channel");
+
+  const page = {
+    limit: integerParameter(params.get("limit"), 500),
+    offset: integerParameter(params.get("offset"), 0),
+  };
+
+  const byVideo =
+    videoId !== null && videoId !== "" ? { ...page, videoId } : page;
+
+  const filters =
+    channel !== null && channel !== "" ? { ...byVideo, channel } : byVideo;
+
+  const result = yield* listTranscripts.handler(filters);
+
+  const body = JSON.stringify({
+    success: true,
+    data: result.data.map(listItem),
+    total: result.total,
+  });
+
+  const digest = yield* Digest.Digest;
+  const etag = `"${yield* digest.digestHex(Digest.sha256, new TextEncoder().encode(body))}"`;
+  const headers = { ETag: etag, "Cache-Control": "private, no-cache" };
+
+  if (request.headers.get("If-None-Match")?.replace(/^W\//u, "") === etag) {
+    return new Response(null, { status: 304, headers });
+  }
+
+  return new Response(body, {
+    headers: { ...headers, "Content-Type": "application/json" },
+  });
+});
 
 const readResponse = Effect.fn("readResponse")(function* readResponse(
   request: Request
@@ -75,45 +122,13 @@ const readResponse = Effect.fn("readResponse")(function* readResponse(
   if (path === "/api/health") {
     return json(yield* health.handler({}));
   }
+
   if (path === "/api/transcripts" || path === "/api/") {
-    const around = url.searchParams.get("around");
-
-    if (around !== null && around !== "") {
-      return json(
-        yield* getTranscriptAround.handler({ id: integerParameter(around, -1) })
-      );
-    }
-    const videoId = url.searchParams.get("video_id");
-    const channel = url.searchParams.get("channel");
-
-    const page = {
-      limit: integerParameter(url.searchParams.get("limit"), 500),
-      offset: integerParameter(url.searchParams.get("offset"), 0),
-    };
-
-    const byVideo = videoId !== null && videoId !== "" ? { ...page, videoId } : page;
-    const filters = channel !== null && channel !== "" ? { ...byVideo, channel } : byVideo;
-    const result = yield* listTranscripts.handler(filters);
-
-    const body = JSON.stringify({
-      success: true,
-      data: result.data.map(listItem),
-      total: result.total,
-    });
-
-    const digest = yield* Digest.Digest;
-    const etag = `"${yield* digest.digestHex(Digest.sha256, new TextEncoder().encode(body))}"`;
-    const headers = { ETag: etag, "Cache-Control": "private, no-cache" };
-
-    if (request.headers.get("If-None-Match")?.replace(/^W\//u, "") === etag) {
-      return new Response(null, { status: 304, headers });
-    }
-    return new Response(body, {
-      headers: { ...headers, "Content-Type": "application/json" },
-    });
+    return yield* listResponse(request, url.searchParams);
   }
 
-  const transcriptMatch = /^\/api\/transcripts\/(?<id>\d+)(?<source>\/source)?$/u.exec(path);
+  const transcriptMatch =
+    /^\/api\/transcripts\/(?<id>\d+)(?<source>\/source)?$/u.exec(path);
 
   if (transcriptMatch) {
     const id = Number(transcriptMatch.groups?.id);
@@ -122,9 +137,9 @@ const readResponse = Effect.fn("readResponse")(function* readResponse(
       const markdown = yield* getTranscriptContent.handler({ id });
       const source = extractSourceUrl(markdown);
 
-      return source !== null
-        ? Response.redirect(source, 302)
-        : missing("Source not found");
+      return source === null
+        ? missing("Source not found")
+        : Response.redirect(source, 302);
     }
 
     return json(yield* getTranscript.handler({ id }));
@@ -134,22 +149,27 @@ const readResponse = Effect.fn("readResponse")(function* readResponse(
 
   if (contentMatch) {
     return new Response(
-      yield* getTranscriptContent.handler({ id: Number(contentMatch.groups?.id) }),
+      yield* getTranscriptContent.handler({
+        id: Number(contentMatch.groups?.id),
+      }),
       { headers: { "Content-Type": "text/plain" } }
     );
   }
+
   if (path === "/api/search") {
     const query = url.searchParams.get("q");
 
     if (query === null || query === "") {
       return missing("Search query required", 400);
     }
+
     return json(yield* searchTranscripts.handler({ query }));
   }
 
   if (path === "/api/categories") {
     return json(yield* listCategories.handler({}));
   }
+
   const thumbnailMatch = /^\/api\/thumb\/(?<videoId>[^/]+)$/u.exec(path);
 
   if (thumbnailMatch?.groups?.videoId !== undefined) {

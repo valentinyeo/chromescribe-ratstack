@@ -19,7 +19,10 @@ interface BuiltWebsite {
 
 const BuiltWebsiteSchema = Schema.Struct({
   default: Schema.Struct({
-    fetch: Schema.declare<BuiltWebsite["default"]["fetch"]>((input): input is BuiltWebsite["default"]["fetch"] => Predicate.isFunction(input)),
+    fetch: Schema.declare<BuiltWebsite["default"]["fetch"]>(
+      (input): input is BuiltWebsite["default"]["fetch"] =>
+        Predicate.isFunction(input)
+    ),
   }),
 });
 
@@ -35,12 +38,17 @@ it.effect(
           "utf-8"
         )
       );
+
       const entry = new URL(
         `../dist/server/${manifest.serverEntry}`,
         import.meta.url
       );
+
       const loaded: unknown = yield* Effect.promise(() => import(entry.href));
-      const website = yield* Schema.decodeUnknownEffect(BuiltWebsiteSchema)(loaded);
+
+      const website =
+        yield* Schema.decodeUnknownEffect(BuiltWebsiteSchema)(loaded);
+
       const calls: Request[] = [];
 
       const bindings: WebsiteBindings = {
@@ -63,10 +71,15 @@ it.effect(
 
         const options: RequestInit = {
           method,
-          headers: { "Cf-Access-Jwt-Assertion": "assertion", Accept: "application/json" },
+          headers: {
+            "Cf-Access-Jwt-Assertion": "assertion",
+            Accept: "application/json",
+          },
         };
 
-        if (method === "POST") options.body = "rpc-body";
+        if (method === "POST") {
+          options.body = "rpc-body";
+        }
 
         const request = new Request(
           `https://next.chromescribe.yeoux.net${path}`,
@@ -76,6 +89,7 @@ it.effect(
         const response = yield* Effect.promise(() =>
           website.default.fetch(request, bindings)
         );
+
         expect(response.status).toBe(202);
         expect(calls.at(-1)).toBe(request);
         expect(calls.at(-1)?.headers.get("Cf-Access-Jwt-Assertion")).toBe(
@@ -93,6 +107,7 @@ it.effect(
           bindings
         )
       );
+
       expect(page.status).toBe(200);
       expect(calls).toHaveLength(4);
     })

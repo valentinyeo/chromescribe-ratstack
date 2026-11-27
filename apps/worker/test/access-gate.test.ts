@@ -51,8 +51,8 @@ const fixture = Effect.fn("fixture")(function* fixture() {
   const sign = Effect.fn("sign")(function* sign(
     payload: TestPayload,
     key: webcrypto.CryptoKey = pair.privateKey,
-    alg: string = "RS256",
-    kid: string = "k1"
+    alg = "RS256",
+    kid = "k1"
   ) {
     const head = Buffer.from(JSON.stringify({ alg, kid })).toString(
       "base64url"
@@ -74,7 +74,7 @@ const fixture = Effect.fn("fixture")(function* fixture() {
   const gate = (token: string | null, settings: AccessSettings = on) =>
     accessGate(
       new Request("https://next.chromescribe.yeoux.net/api/transcripts", {
-        headers: token !== null ? { "Cf-Access-Jwt-Assertion": token } : {},
+        headers: token === null ? {} : { "Cf-Access-Jwt-Assertion": token },
       })
     ).pipe(
       Effect.provide(accessVerifierLayer(settings)),
@@ -142,6 +142,7 @@ it.effect(
       ]) {
         expect((yield* gate(token, settings))?.status).toBe(401);
       }
+
       expect(
         (yield* gate(null, { CHRO10_API_GATE: "unexpected" }))?.status
       ).toBe(401);

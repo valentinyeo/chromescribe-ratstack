@@ -1,12 +1,15 @@
 import { desc, sql } from "drizzle-orm";
 import {
   check,
+  customType,
   index,
   integer,
   sqliteTable,
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+
+const legacyDateTime = customType<{ data: string }>({ dataType: () => "DATETIME" });
 
 export const transcripts = sqliteTable(
   "transcripts",
@@ -21,7 +24,7 @@ export const transcripts = sqliteTable(
     thumbnailUrl: text("thumbnail_url"),
     category: text("category"),
     tags: text("tags"),
-    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+    createdAt: legacyDateTime("created_at").default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
     index("idx_video_id").on(table.videoId),
@@ -38,9 +41,9 @@ export const queue = sqliteTable(
     url: text("url").notNull(),
     videoId: text("video_id").notNull(),
     status: text("status").notNull().default("pending"),
-    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-    startedAt: text("started_at"),
-    finishedAt: text("finished_at"),
+    createdAt: legacyDateTime("created_at").default(sql`CURRENT_TIMESTAMP`),
+    startedAt: legacyDateTime("started_at"),
+    finishedAt: legacyDateTime("finished_at"),
     error: text("error"),
     attempts: integer("attempts").default(0),
     transcriptId: integer("transcript_id"),

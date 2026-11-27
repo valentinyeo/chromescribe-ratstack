@@ -1,9 +1,15 @@
 import { Context } from "effect";
 import type { Effect } from "effect";
 
-import type { CategoryCount, TranscriptAround, TranscriptDetail, TranscriptListInput, TranscriptListResult } from "./transcripts.js";
 import type { TranscriptNotFound } from "./transcript-not-found.js";
 import type { TranscriptStorageError } from "./transcript-storage-error.js";
+import type {
+  CategoryCount,
+  TranscriptAround,
+  TranscriptDetail,
+  TranscriptListInput,
+  TranscriptListResult,
+} from "./transcripts.js";
 
 export class TranscriptRepository extends Context.Service<
   TranscriptRepository,

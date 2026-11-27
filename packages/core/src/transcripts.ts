@@ -1,15 +1,22 @@
 import { Schema } from "effect";
 
+import { TranscriptContentNotFound } from "./transcript-content-not-found.js";
 import { TranscriptNotFound } from "./transcript-not-found.js";
 import { TranscriptStorageError } from "./transcript-storage-error.js";
-import { TranscriptContentNotFound } from "./transcript-content-not-found.js";
 
-export { TranscriptNotFound, TranscriptStorageError, TranscriptContentNotFound };
+export {
+  TranscriptNotFound,
+  TranscriptStorageError,
+  TranscriptContentNotFound,
+};
+
 export { TranscriptRepository } from "./transcript-repository.js";
-export { TranscriptContentStore } from "./transcript-content-store.js";
-export type { TranscriptThumbnail } from "./transcript-content-store.js";
-export { AccessVerifier } from "./access-verifier.js";
 
+export { TranscriptContentStore } from "./transcript-content-store.js";
+
+export type { TranscriptThumbnail } from "./transcript-content-store.js";
+
+export { AccessVerifier } from "./access-verifier.js";
 
 export const TranscriptSummarySchema = Schema.Struct({
   id: Schema.Int,

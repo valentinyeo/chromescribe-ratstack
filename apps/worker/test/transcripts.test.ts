@@ -51,7 +51,7 @@ const decodeResponse = <
     Effect.flatMap(Schema.decodeUnknownEffect(schema))
   );
 
-const fixture = Effect.fn("fixture")(function* fixture(gate: string = "0") {
+const fixture = Effect.fn("fixture")(function* fixture(gate = "0") {
   const db = yield* Effect.acquireRelease(
     Effect.sync(() => {
       const database = new DatabaseSync(":memory:");
@@ -81,6 +81,7 @@ const fixture = Effect.fn("fixture")(function* fixture(gate: string = "0") {
           "2025-05-05 05:05:05"
         );
       }
+
       return database;
     }),
     (database) =>
@@ -154,9 +155,15 @@ it.effect("serves bounded formatted pages, filters and conditional ETags", () =>
 
     expect(again.status).toBe(304);
     expect(yield* Effect.promise(() => again.text())).toBe("");
-    yield* Effect.promise(() => DB.prepare("UPDATE transcripts SET title = ? WHERE id = ?").bind("Changed", 7).all());
+    yield* Effect.promise(() =>
+      DB.prepare("UPDATE transcripts SET title = ? WHERE id = ?")
+        .bind("Changed", 7)
+        .all()
+    );
 
-    const changed = yield* call("/api/transcripts?limit=3", { headers: { "If-None-Match": etag ?? "" } });
+    const changed = yield* call("/api/transcripts?limit=3", {
+      headers: { "If-None-Match": etag ?? "" },
+    });
 
     expect(changed.status).toBe(200);
     expect(changed.headers.get("ETag")).not.toBe(etag);
@@ -174,6 +181,7 @@ it.effect("serves bounded formatted pages, filters and conditional ETags", () =>
       )).data.map((row) => row.id)
     ).toEqual([1]);
     expect((yield* call("/api/transcripts?limit=abc")).status).toBe(200);
+    expect((yield* decodeResponse(ListBody, yield* call("/api/transcripts?limit=1tail"))).data).toHaveLength(1);
   })
 );
 
@@ -355,6 +363,7 @@ it.effect(
       ]) {
         expect(extractSourceUrl(`**Source:** ${value}`)).toBeNull();
       }
+
       expect(
         extractSourceUrl("**Source:** https://example.com/a?q=1#x\r\n")
       ).toBe("https://example.com/a?q=1#x");

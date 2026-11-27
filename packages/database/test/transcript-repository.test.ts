@@ -95,28 +95,30 @@ it.layer(sqliteLayer)("transcript repository", (test) => {
     })
   );
 
-  test.effect("locates adjacent records and both ends with timestamp ties", () =>
-    Effect.gen(function* around() {
-      const repository = yield* TranscriptRepository;
-      expect(yield* repository.getAround(519)).toEqual({
-        prev: 520,
-        next: 518,
-        index: 1,
-        total: 520,
-      });
-      expect(yield* repository.getAround(520)).toEqual({
-        prev: null,
-        next: 519,
-        index: 0,
-        total: 520,
-      });
-      expect(yield* repository.getAround(1)).toEqual({
-        prev: 2,
-        next: null,
-        index: 519,
-        total: 520,
-      });
-    })
+  test.effect(
+    "locates adjacent records and both ends with timestamp ties",
+    () =>
+      Effect.gen(function* around() {
+        const repository = yield* TranscriptRepository;
+        expect(yield* repository.getAround(519)).toEqual({
+          prev: 520,
+          next: 518,
+          index: 1,
+          total: 520,
+        });
+        expect(yield* repository.getAround(520)).toEqual({
+          prev: null,
+          next: 519,
+          index: 0,
+          total: 520,
+        });
+        expect(yield* repository.getAround(1)).toEqual({
+          prev: 2,
+          next: null,
+          index: 519,
+          total: 520,
+        });
+      })
   );
 
   test.effect(

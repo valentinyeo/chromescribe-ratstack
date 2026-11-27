@@ -1,9 +1,24 @@
-# Pre-commit fence. Cheating with --no-verify is blocked by agent hooks.
-# Install: pnpm exec lefthook install (also via prepare)
 pre-commit:
   parallel: false
   commands:
-    check:
-      run: pnpm check
-    test:
-      run: pnpm test
+    staged-brief:
+      run: |
+        git diff --cached --name-only --diff-filter=ACMR | while IFS= read -r path; do
+          case "$path" in
+            brief.txt|*/brief.txt)
+              echo 'brief.txt is staged. Worker briefs are private. Fix: run `git restore --staged -- brief.txt`.' >&2
+              exit 1
+              ;;
+          esac
+        done
+    staged-diff:
+      run: git diff --cached --check
+    author-email:
+      run: |
+        case "$(git var GIT_AUTHOR_IDENT)" in
+          *" <3296316+valentinyeo@users.noreply.github.com> "*) ;;
+          *)
+            echo 'Author email is not the approved noreply address. Public commits must protect identity. Fix: run `git config user.email 3296316+valentinyeo@users.noreply.github.com`.' >&2
+            exit 1
+            ;;
+        esac

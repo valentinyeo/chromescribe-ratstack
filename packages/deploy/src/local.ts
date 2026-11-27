@@ -1,4 +1,4 @@
-import { Approval } from "@rat-stack/capability/approval";
+import { Approval } from "@chromescribe/capability/approval";
 import { AuthProviders } from "alchemy";
 import * as Alchemist from "alchemy/Alchemist";
 import { collectAuthProviders } from "alchemy/Alchemist/AuthRegistry";
@@ -404,12 +404,12 @@ export const localLayer = (
           );
 
           const manifest = yield* fs
-            .readFileString("../../apps/site/dist/content/manifest.json")
+            .readFileString("../../apps/web/dist/server/foldkit.build.json")
             .pipe(
               Effect.flatMap(
                 Schema.decodeEffect(
                   Schema.fromJsonString(
-                    Schema.Struct({ generation: Schema.NonEmptyString })
+                    Schema.Struct({ schemaVersion: Schema.Literal(1) })
                   )
                 )
               ),
@@ -421,7 +421,10 @@ export const localLayer = (
               )
             );
 
-          yield* Ref.set(contentGeneration, Option.some(manifest.generation));
+          yield* Ref.set(
+            contentGeneration,
+            Option.some(String(manifest.schemaVersion))
+          );
           yield* Ref.set(pinned, Option.some(credential));
 
           yield* preflightPermissions(credential);

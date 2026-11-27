@@ -4,12 +4,16 @@ import {
   invokerFor,
   toCatalog,
   wireFailureSchema,
-} from "@rat-stack/capability";
-import type { AnyCapability, AnyContract, Around } from "@rat-stack/capability";
-import { ActorWatch } from "@rat-stack/capability/actor-watch";
-import type { ActorWatchService } from "@rat-stack/capability/actor-watch";
-import { CallWatch } from "@rat-stack/capability/call-watch";
-import type { CallWatchService } from "@rat-stack/capability/call-watch";
+} from "@chromescribe/capability";
+import type {
+  AnyCapability,
+  AnyContract,
+  Around,
+} from "@chromescribe/capability";
+import { ActorWatch } from "@chromescribe/capability/actor-watch";
+import type { ActorWatchService } from "@chromescribe/capability/actor-watch";
+import { CallWatch } from "@chromescribe/capability/call-watch";
+import type { CallWatchService } from "@chromescribe/capability/call-watch";
 import type { JsonSchema } from "effect";
 import { Cause, Clock, Effect, Exit, Layer, Option, Schema } from "effect";
 

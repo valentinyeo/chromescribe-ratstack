@@ -1,6 +1,6 @@
+import { gateOutcome } from "@chromescribe/check-harness";
+import type { Verdict } from "@chromescribe/check-harness";
 import { expect, it } from "@effect/vitest";
-import { gateOutcome } from "@rat-stack/check-harness";
-import type { Verdict } from "@rat-stack/check-harness";
 import { Clock, Effect, Fiber, Option, Schema } from "effect";
 import { TestClock } from "effect/testing";
 

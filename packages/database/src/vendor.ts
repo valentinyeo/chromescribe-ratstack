@@ -14,4 +14,4 @@ export type DatabaseVendorResource = Data.TaggedEnum<{
 export class DatabaseVendor extends Context.Service<
   DatabaseVendor,
   DatabaseVendorResource
->()("@rat-stack/database/DatabaseVendor") {}
+>()("@chromescribe/database/DatabaseVendor") {}

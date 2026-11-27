@@ -1,7 +1,7 @@
-import { watchActor } from "@rat-stack/capability/actor-watch";
-import { Approval } from "@rat-stack/capability/approval";
-import { gateOutcome } from "@rat-stack/check-harness";
-import type { Verdict } from "@rat-stack/check-harness";
+import { watchActor } from "@chromescribe/capability/actor-watch";
+import { Approval } from "@chromescribe/capability/approval";
+import { gateOutcome } from "@chromescribe/check-harness";
+import type { Verdict } from "@chromescribe/check-harness";
 import {
   createEffectActor,
   createEffectLogic,

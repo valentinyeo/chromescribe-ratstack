@@ -1,4 +1,4 @@
-import type { Flag, FlagContext } from "@rat-stack/core/flags";
+import type { Flag, FlagContext } from "@chromescribe/core/flags";
 import { Schema } from "effect";
 
 export const Percentage = Schema.Finite.check(

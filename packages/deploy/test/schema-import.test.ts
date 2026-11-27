@@ -57,7 +57,7 @@ it.layer(NodeServices.layer)((test) => {
         );
 
         expect(resolved.sources.map((source) => source.label)).toContain(
-          "apps/site/.env.schema"
+          ".env.schema"
         );
         expect(required.length).toBeGreaterThan(0);
         expect(

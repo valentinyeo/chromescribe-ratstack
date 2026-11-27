@@ -1,5 +1,5 @@
+import { toCommand } from "@chromescribe/capability";
 import { NodeRuntime } from "@effect/platform-node";
-import { toCommand } from "@rat-stack/capability";
 import { PlatformServices } from "alchemy/Util/PlatformServices";
 import { Console, Effect, Layer } from "effect";
 import { Command } from "effect/cli";

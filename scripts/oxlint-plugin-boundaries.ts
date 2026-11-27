@@ -70,8 +70,6 @@ const workspacePath = (filename: string) => {
 const isWithin = (filename: string, directory: string) =>
   filename === directory || filename.startsWith(`${directory}/`);
 
-const EVENTS_SEAM = "apps/site/src/events.ts";
-
 const isPackage = (filename: string) => isWithin(filename, "packages");
 
 const isCapabilityPackage = (filename: string) =>
@@ -176,24 +174,6 @@ const importModule = (
   specifier: string
 ) => {
   const target = normalizeWorkspacePath(filename, specifier);
-
-  if (
-    target !== null &&
-    isPackage(filename) &&
-    !isWithin(filename, "packages/events") &&
-    /^packages\/events\/(?:src\/)?basin(?:\.[cm]?[jt]s)?$/u.test(target)
-  ) {
-    context.report({ messageId: "eventsBasinOwner", node });
-  }
-
-  if (
-    target !== null &&
-    isWithin(target, "packages/events") &&
-    !isWithin(filename, "packages/events") &&
-    filename !== EVENTS_SEAM
-  ) {
-    context.report({ messageId: "eventsSeam", node });
-  }
 
   if (target !== null && isPackage(filename) && isWithin(target, "apps")) {
     context.report({ messageId: "packageApp", node });
@@ -908,12 +888,8 @@ const noCrossLayerImports = defineRule({
     messages: {
       capabilityDomain:
         "packages/capability cannot import packages/core domain code. Core depends on capability, so this import makes a cycle. Fix: move the shared type into `packages/capability`, or pass the value in as a parameter.",
-      eventsBasinOwner:
-        "This imports shared Basin infrastructure from the events cartridge. Deleting the cartridge would then break every other Basin user. Fix: import it from `@rat-stack/basin`.",
-      eventsSeam:
-        "This module reaches the events cartridge directly. Removing the cartridge must stay a one-line change. Fix: import from `apps/site/src/events.ts`, the only file that may import `@rat-stack/events/site`.",
       infraOwner:
-        "This module imports Stack wiring from apps/infra. The Stack owns its wiring, and outside imports braid deploy code into runtime code. Fix: import the capability or service contract the Stack provides, for example from `@rat-stack/core/contracts`.",
+        "This module imports Stack wiring from apps/infra. The Stack owns its wiring, and outside imports braid deploy code into runtime code. Fix: import the capability or service contract the Stack provides, for example from `@chromescribe/core/contracts`.",
       packageApp:
         "Packages cannot import application code. Dependencies run from apps to packages, so this import makes a cycle. Fix: move the shared code into a package under `packages/`, or have the app pass it in.",
     },
@@ -969,7 +945,7 @@ const noCoreAdapters = defineRule({
     },
     messages: {
       coreAdapter:
-        "Core cannot import HTTP clients or adapters. Core owns job-shaped ports, so a provider inside it cannot be swapped or removed. Fix: declare a port in `packages/core`, implement it in an adapter package such as `packages/subscriber-delivery`, and provide it from the composition root.",
+        "Core cannot import HTTP clients or adapters. Core owns job-shaped ports, so a provider inside it cannot be swapped or removed. Fix: declare a port in `packages/core`, implement it in an adapter package such as `packages/database`, and provide it from the composition root.",
     },
     type: "problem",
   },
@@ -1006,7 +982,7 @@ const noBrowserServerImports = defineRule({
     },
     messages: {
       capabilityImport:
-        "Feature and client modules can import only browser-safe contract entry points. Capability handlers and domain implementation would ship server code to the browser. Fix: import from `@rat-stack/core/contracts`, `@rat-stack/capability/rpc-group`, or `@rat-stack/capability/web-mcp`, and reach the handler through the `RpcClient`.",
+        "Feature and client modules can import only browser-safe contract entry points. Capability handlers and domain implementation would ship server code to the browser. Fix: import from `@chromescribe/core/contracts`, `@chromescribe/capability/rpc-group`, or `@chromescribe/capability/web-mcp`, and reach the handler through the `RpcClient`.",
       serverImport:
         "Feature and client modules cannot import Node, Alchemy, Worker, infra, or server-only modules. The browser bundle would fail to build or leak server code. Fix: put the work behind a capability and call it from a named `Command.define` in `apps/web/src/client`.",
     },
@@ -1453,8 +1429,7 @@ const noBrowserGlobalsOnServer = defineRule({
 });
 
 const isDevtoolsModule = (target: string) =>
-  isWithin(target, "packages/devtools") ||
-  /^packages\/auth\/(?:(?:src|dist)\/)?devtools(?:\/|\.|$)/u.test(target);
+  isWithin(target, "packages/devtools");
 
 const devFolderOf = (target: string) =>
   /^(?<folder>apps\/[^/]+\/src\/dev)(?:\/|$)/u.exec(target)?.groups?.folder;
@@ -1508,76 +1483,7 @@ const noDevtoolsInProduction = defineRule({
       devFolder:
         "Only modules inside {{folder}} may import it. The dev composition is an entry of its own, and production code must not reach it. Fix: move the importing module under `{{folder}}`, or import a production module instead.",
       devtools:
-        "Devtools and test people (@rat-stack/devtools, @rat-stack/auth/devtools) belong in apps/*/src/dev/**, apps/cli, or tests. The rat_call and rat_test_person capabilities bypass per-request auth and create accounts with a fixed password, so a production composition must never include them. Fix: move this import into `apps/<app>/src/dev/`, `apps/cli`, or a test file.",
-    },
-    type: "problem",
-  },
-});
-
-const noCodeSnippetsInRuntime = defineRule({
-  create(context) {
-    const filename = workspacePath(context.filename);
-    const runtime = /^(?:apps|packages)\/[^/]+\/src\//u.test(filename);
-
-    const check = (node: ESTree.Node, source: ESTree.Expression) => {
-      const specifier = isStringModule(source);
-
-      if (specifier === null) {
-        return;
-      }
-
-      const target = normalizeWorkspacePath(filename, specifier);
-
-      const snippets =
-        target !== null && isWithin(target, "packages/code-snippets");
-
-      const og =
-        (target !== null && isWithin(target, "packages/og")) ||
-        specifier === "satori" ||
-        specifier.startsWith("satori/") ||
-        specifier === "@resvg/resvg-js" ||
-        specifier.startsWith("@resvg/resvg-js/");
-
-      if (runtime && og && !isWithin(filename, "packages/og")) {
-        context.report({ messageId: "ogBuildOnly", node });
-      }
-
-      const engine =
-        specifier === "shiki" ||
-        specifier.startsWith("shiki/") ||
-        specifier.startsWith("@shikijs/");
-
-      if (
-        runtime &&
-        !isWithin(filename, "packages/code-snippets") &&
-        (snippets || engine)
-      ) {
-        context.report({ messageId: "buildOnly", node });
-      }
-
-      if (
-        isWithin(filename, "packages/code-snippets/src") &&
-        !filename.endsWith("/shiki.ts") &&
-        engine
-      ) {
-        context.report({ messageId: "adapterOnly", node });
-      }
-    };
-
-    return moduleSourceVisitors(context, check);
-  },
-  meta: {
-    docs: {
-      description:
-        "Keep OG images and code snippets build-only and Shiki behind its adapter.",
-    },
-    messages: {
-      adapterOnly:
-        "Code-snippets core cannot import Shiki. Core stays adapter-free so the highlighter can be swapped or removed. Fix: depend on the `Highlighter` port and provide the adapter from `@rat-stack/code-snippets/shiki`.",
-      buildOnly:
-        "Code snippets and Shiki are build-only and cannot reach runtime src modules. They would add megabytes to the Worker startup bundle. Fix: run the import from a build script under `apps/site/scripts` and read its generated output at runtime.",
-      ogBuildOnly:
-        "OG rendering is build-only and cannot reach runtime src modules. Workers serve the prebuilt cards and cannot load the native renderer. Fix: move the import to a build script under `apps/site/scripts`.",
+        "Devtools and test people (@chromescribe/devtools) belong in apps/*/src/dev/**, apps/cli, or tests. The rat_call capability bypasses approval gating and can replay any capability, so a production composition must never include it. Fix: move this import into `apps/<app>/src/dev/`, `apps/cli`, or a test file.",
     },
     type: "problem",
   },
@@ -1588,7 +1494,6 @@ export default definePlugin({
   rules: {
     "no-browser-globals-on-server": noBrowserGlobalsOnServer,
     "no-browser-server-imports": noBrowserServerImports,
-    "no-code-snippets-in-runtime": noCodeSnippetsInRuntime,
     "no-core-adapters": noCoreAdapters,
     "no-cross-layer-imports": noCrossLayerImports,
     "no-devtools-in-production": noDevtoolsInProduction,

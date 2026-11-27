@@ -10,10 +10,7 @@ const PluginSchema = Schema.declare<Plugin>(
     Predicate.isString(value.name)
 );
 
-const options = {
-  runtimeInjection: false,
-  useCSSLayers: { before: ["rat-base"] },
-};
+const options = { runtimeInjection: false };
 
 export const stylexRenderingPlugin = () =>
   Schema.decodeUnknownSync(PluginSchema)(stylexRollup(options));

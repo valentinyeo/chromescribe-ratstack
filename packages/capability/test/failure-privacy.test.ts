@@ -24,7 +24,6 @@ import {
   toRpc,
   toToolkit,
 } from "../src/index.js";
-import { invokerFor } from "../src/to-code-mode.js";
 import { wireFailureSchema } from "../src/wire-failure.js";
 import { makeMcpClient, serverLayer } from "./mcp-harness.js";
 import { RequiredCauseFailure } from "./required-cause-failure.js";
@@ -197,17 +196,6 @@ const surfaces = [
         });
 
         expect(response.isError).toBe(true);
-
-        return JSON.stringify(response);
-      }),
-  },
-  {
-    name: "code mode",
-    response: (required: boolean) =>
-      Effect.gen(function* codeModeResponse() {
-        const invoke = yield* invokerFor([capability]);
-        const response = yield* invoke("privateFailure", { required });
-        expect(response.ok).toBe(false);
 
         return JSON.stringify(response);
       }),

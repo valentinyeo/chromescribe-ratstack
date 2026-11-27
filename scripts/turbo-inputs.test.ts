@@ -309,11 +309,13 @@ await test("a bounded reader requires its own input or a real ancestor edge", (c
   context.after(() => {
     rmSync(root, { recursive: true, force: true });
   });
-  const source = "packages/core/test/cafe-people.test.ts";
-  const data = ".brain/data/cafe/people.json";
+  const source = "apps/web/test/production-bundle.test.ts";
+  const data = "apps/web/dist/browser.js";
 
-  mkdirSync(path.join(root, "packages/core/test"), { recursive: true });
-  mkdirSync(path.join(root, ".brain/data/cafe"), { recursive: true });
+  mkdirSync(path.join(root, source).replace(/\/[^/]+$/u, ""), {
+    recursive: true,
+  });
+  mkdirSync(path.join(root, "apps/web/dist"), { recursive: true });
   writeFileSync(
     path.join(root, source),
     'import { readFileSync } from "node:fs"; export const value = readFileSync(process.argv[2]);'
@@ -321,7 +323,7 @@ await test("a bounded reader requires its own input or a real ancestor edge", (c
   writeFileSync(path.join(root, data), "[]");
   writeFileSync(
     path.join(root, "packages/probe/test/main.test.ts"),
-    'import "../../core/test/cafe-people.test.js";'
+    'import "../../../apps/web/test/production-bundle.test.js";'
   );
 
   const own = {
@@ -387,7 +389,7 @@ await test("a bounded reader requires its own input or a real ancestor edge", (c
   const throughOutput = {
     tasks: [
       ...without.map((task) => ({ ...task, dependencies: [ancestor.taskId] })),
-      { ...ancestor, inputs: {}, outputs: [".brain/data/cafe/**"] },
+      { ...ancestor, inputs: {}, outputs: ["apps/web/dist/**"] },
     ],
   };
 
@@ -669,7 +671,7 @@ await test("generated imports need an untracked path, ancestor output and declar
   context.after(() => {
     rmSync(root, { recursive: true, force: true });
   });
-  const source = "apps/web/test/reader-worker-first-head.test.ts";
+  const source = "apps/web/test/production-bundle.test.ts";
   const generated = "apps/web/dist/server/fetch.js";
   mkdirSync(path.dirname(path.join(root, source)), { recursive: true });
   mkdirSync(path.dirname(path.join(root, generated)), { recursive: true });
@@ -680,7 +682,7 @@ await test("generated imports need an untracked path, ancestor output and declar
 
   writeFileSync(
     path.join(root, "packages/probe/test/main.test.ts"),
-    'import "../../../apps/web/test/reader-worker-first-head.test.js";'
+    'import "../../../apps/web/test/production-bundle.test.js";'
   );
 
   const producer = {
@@ -735,7 +737,7 @@ await test("generated imports need an untracked path, ancestor output and declar
   );
   writeFileSync(
     path.join(root, "packages/probe/test/main.test.ts"),
-    'import "../../../apps/web/test/reader-worker-first-head.test.js";'
+    'import "../../../apps/web/test/production-bundle.test.js";'
   );
   execFileSync("git", ["add", "--", generated], { cwd: root });
   assert.ok(
@@ -750,22 +752,22 @@ await test("cold generated source imports require the declared producer even wit
   context.after(() => {
     rmSync(root, { recursive: true, force: true });
   });
-  const names = ["bundled-content", "interest-pages", "rat-icons"];
+  const names = ["bundled-content"];
   writeFileSync(
     path.join(root, "packages/probe/test/main.test.ts"),
     names
       .flatMap((name) =>
         ["js", "ts"].map(
           (extension) =>
-            `import "../../../apps/site/src/${name}.generated.${extension}";`
+            `import "../../../apps/web/src/${name}.generated.${extension}";`
         )
       )
       .join("\n")
   );
 
   const producer = {
-    taskId: "@rat-stack/site#generate",
-    directory: "apps/site",
+    taskId: "@chromescribe/web#generate",
+    directory: "apps/web",
     command: "<NONEXISTENT>",
     dependencies: [],
     outputs: names.map((name) => `src/${name}.generated.ts`),
@@ -804,7 +806,7 @@ await test("cold generated source imports require the declared producer even wit
 
   writeFileSync(
     path.join(root, "packages/probe/test/main.test.ts"),
-    'import "../../../apps/site/src/unknown.generated.js";'
+    'import "../../../apps/web/src/unknown.generated.js";'
   );
 
   const undeclared = audit(root, {
@@ -816,13 +818,13 @@ await test("cold generated source imports require the declared producer even wit
       failure.includes("unknown.generated.js")
     )
   );
-  mkdirSync(path.join(root, "apps/site/src"), { recursive: true });
-  const tracked = "apps/site/src/bundled-content.generated.ts";
+  mkdirSync(path.join(root, "apps/web/src"), { recursive: true });
+  const tracked = "apps/web/src/bundled-content.generated.ts";
   writeFileSync(path.join(root, tracked), "export const value = 1;");
   execFileSync("git", ["add", "--", tracked], { cwd: root });
   writeFileSync(
     path.join(root, "packages/probe/test/main.test.ts"),
-    'import "../../../apps/site/src/bundled-content.generated.js";'
+    'import "../../../apps/web/src/bundled-content.generated.js";'
   );
   assert.ok(
     audit(root, { tasks: [...consumer, producer] }).failures.length > 0
@@ -972,8 +974,9 @@ await test("temporary readers still require their declared repository source roo
   });
   const source = "packages/core/test/no-comments-rule.test.ts";
   const plugin = "scripts/oxlint-plugin-no-comments.ts";
-  mkdirSync(path.join(root, "packages/core/test"), { recursive: true });
+
   mkdirSync(path.join(root, "scripts"));
+  mkdirSync(path.dirname(path.join(root, source)), { recursive: true });
   writeFileSync(
     path.join(root, source),
     'import { readFileSync } from "node:fs"; export const value = readFileSync(process.argv[2]);'

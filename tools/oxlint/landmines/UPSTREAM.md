@@ -42,5 +42,5 @@ The checker detects literal changes, including changes to a numeric local `const
 
 1. Check out the proposed upstream commit outside the repo. Diff its four rules, their tests, and the MIT license against the pin above.
 2. Port selected changes without importing upstream's entry point, dependency graph, or allowlist. Record what you took and what you rejected here. Keep the provenance line and pin in sync.
-3. Run `pnpm --filter @rat-stack/core exec vitest run test/landmines.test.ts` and `pnpm check:landmines`. Plant one violation for each new matcher and see its fixture fail with the matcher disabled.
+3. Run `pnpm --filter @chromescribe/core exec vitest run test/landmines.test.ts` and `pnpm check:landmines`. Plant one violation for each new matcher and see its fixture fail with the matcher disabled.
 4. Explain each added budget; remove each stale entry. Run `pnpm turbo run check test build --summarize`.

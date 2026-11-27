@@ -75,16 +75,6 @@ export default defineConfig({
   overrides: [
     ...foldkitOverrides,
     {
-      files: ["packages/catalog/**/*.ts", "apps/catalog/**/*.ts"],
-      rules: {
-        "unicorn/filename-case": [
-          "error",
-          { cases: { kebabCase: true, pascalCase: true } },
-        ],
-        "max-classes-per-file": ["error", 3],
-      },
-    },
-    {
       files: [
         "**/*.{test,spec,test-d,spec-d}.{ts,tsx,js,jsx,mts,cts,mjs,cjs}",
         "**/__tests__/**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}",
@@ -118,16 +108,6 @@ export default defineConfig({
       files: ["apps/*/src/features/**", "apps/*/src/dev/features/**"],
       rules: {
         "rat-stack-boundaries/no-feature-transport": "error",
-      },
-    },
-    {
-      files: [
-        "apps/site/scripts/content-lib.ts",
-        "apps/site/scripts/generate-content.ts",
-        "apps/site/scripts/wiki-prose.ts",
-      ],
-      rules: {
-        "rat-stack-patterns/audited-content-regex": "error",
       },
     },
   ],
@@ -173,7 +153,6 @@ export default defineConfig({
     "oxc/no-accumulating-spread": "error",
     "promise/prefer-await-to-then": "error",
     "rat-stack-boundaries/no-browser-globals-on-server": "error",
-    "rat-stack-boundaries/no-code-snippets-in-runtime": "error",
     "rat-stack-boundaries/no-core-adapters": "error",
     "rat-stack-boundaries/no-cross-layer-imports": "error",
     "rat-stack-boundaries/no-devtools-in-production": "error",

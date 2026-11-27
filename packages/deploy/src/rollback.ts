@@ -1,6 +1,6 @@
-import { watchActor } from "@rat-stack/capability/actor-watch";
-import { defineContract } from "@rat-stack/capability/contract";
-import { implement } from "@rat-stack/capability/implement";
+import { watchActor } from "@chromescribe/capability/actor-watch";
+import { defineContract } from "@chromescribe/capability/contract";
+import { implement } from "@chromescribe/capability/implement";
 import {
   createEffectActor,
   createEffectLogic,

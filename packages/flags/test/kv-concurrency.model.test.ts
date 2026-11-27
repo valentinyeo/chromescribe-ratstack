@@ -1,10 +1,10 @@
-import { expect, it } from "@effect/vitest";
 import {
   FlagAtomicityRequired,
   FlagLedger,
   FlagTarget,
-} from "@rat-stack/core/flag-control";
-import { defineFlag } from "@rat-stack/core/flags";
+} from "@chromescribe/core/flag-control";
+import { defineFlag } from "@chromescribe/core/flags";
+import { expect, it } from "@effect/vitest";
 import {
   Cause,
   Context,

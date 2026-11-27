@@ -1,6 +1,6 @@
+import { Approval } from "@chromescribe/capability/approval";
 import { NodeServices } from "@effect/platform-node";
 import { expect, it } from "@effect/vitest";
-import { Approval } from "@rat-stack/capability/approval";
 import { emit } from "alchemy/Events";
 import {
   Cause,

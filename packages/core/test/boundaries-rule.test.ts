@@ -37,7 +37,6 @@ const lintFixture = (area: string, source: string): LintResult => {
       rules: {
         "rat-stack-boundaries/no-browser-globals-on-server": "error",
         "rat-stack-boundaries/no-browser-server-imports": "error",
-        "rat-stack-boundaries/no-code-snippets-in-runtime": "error",
         "rat-stack-boundaries/no-core-adapters": "error",
         "rat-stack-boundaries/no-cross-layer-imports": "error",
         "rat-stack-boundaries/no-devtools-in-production": "error",
@@ -74,43 +73,6 @@ const expectRuleSoft = (result: LintResult, message: string) => {
 };
 
 describe("architecture boundary rules", () => {
-  it("keeps code-snippets and Shiki out of runtime import graphs", () => {
-    for (const source of [
-      'import { prepareCode } from "@rat-stack/code-snippets";',
-      'const engine = import("shiki");',
-      'export * from "@rat-stack/code-snippets/shiki";',
-    ]) {
-      expectRuleSoft(
-        lintFixture("apps/site/src", source),
-        "Code snippets and Shiki are build-only"
-      );
-      expect(lintFixture("apps/site/scripts", source).status).toBe(0);
-    }
-
-    expectRule(
-      lintFixture(
-        "packages/code-snippets/src",
-        'import { createHighlighter } from "shiki";'
-      ),
-      "Code-snippets core cannot import Shiki"
-    );
-  });
-
-  it("keeps the OG cartridge and its engines in build scripts", () => {
-    for (const source of [
-      'export * from "@rat-stack/og/coverage";',
-      'const renderer = import("@rat-stack/og");',
-      'import satori from "satori";',
-      'import { Resvg } from "@resvg/resvg-js";',
-    ]) {
-      expectRuleSoft(
-        lintFixture("apps/site/src", source),
-        "OG rendering is build-only"
-      );
-      expect(lintFixture("apps/site/scripts", source).status).toBe(0);
-    }
-  });
-
   it("keeps clients and vendor adapters out of core through every import form", () => {
     const sources = [
       'import { HttpClient } from "effect/unstable/http";',
@@ -120,9 +82,9 @@ describe("architecture boundary rules", () => {
       'type Client = import("effect/http/HttpClient").HttpClient;',
       'import * as client from "effect/unstable/http/HttpClient";',
       'export { HttpClientRequest } from "effect/unstable/http";',
-      'export * from "@rat-stack/subscriber-delivery";',
-      'const adapter = import("@rat-stack/subscriber-delivery");',
-      'const adapter = require("@rat-stack/subscriber-delivery");',
+      'export * from "@chromescribe/database/hyperdrive-postgres";',
+      'const adapter = import("@chromescribe/database/hyperdrive-postgres");',
+      'const adapter = require("@chromescribe/database/hyperdrive-postgres");',
       'type Client = import("effect/unstable/http/HttpClient").HttpClient;',
       'import { provider } from "../../adapters/provider.js";',
       'import { provider } from "./vendor/provider.js";',
@@ -142,15 +104,15 @@ describe("architecture boundary rules", () => {
       'import { Effect } from "effect";',
       'import { types } from "xstate";',
       'import { createEffectActor } from "@xstate/effect";',
-      'import { defineContract } from "@rat-stack/capability/contract";',
-      'import { SubscriberIntake } from "./interest-intake.js";',
+      'import { defineContract } from "@chromescribe/capability/contract";',
+      'import { RunLog } from "./stats.js";',
     ]) {
       expect(lintFixture("packages/core/src", source).status).toBe(0);
     }
 
     expect(
       lintFixture(
-        "packages/subscriber-delivery/src",
+        "packages/database/src",
         'import { HttpClient } from "effect/unstable/http";'
       ).status
     ).toBe(0);
@@ -180,50 +142,6 @@ describe("architecture boundary rules", () => {
     expect(configSource).toContain(
       '"rat-stack-boundaries/no-feature-transport": "error"'
     );
-  });
-
-  it("keeps shared Basin infrastructure independent of the events cartridge", () => {
-    for (const source of [
-      'import { basinStream } from "@rat-stack/events/basin";',
-      'export { icebergSink } from "@rat-stack/events/basin";',
-      'type Maintenance = import("@rat-stack/events/basin").CatalogMaintenance;',
-      'const basin = require("@rat-stack/events/basin");',
-      'import { basinStream } from "../../../events/src/basin.js";',
-    ]) {
-      expectRuleSoft(
-        lintFixture("packages/intake-live/src", source),
-        "This imports shared Basin infrastructure from the events cartridge."
-      );
-      expect(lintFixture("packages/events/src", source).status).toBe(0);
-    }
-
-    expect(
-      lintFixture(
-        "packages/intake-live/src",
-        'import { basinStream } from "@rat-stack/basin";'
-      ).status
-    ).toBe(0);
-  });
-
-  it("lets only the site seam import the events cartridge", () => {
-    for (const source of [
-      'import { events } from "@rat-stack/events/site";',
-      'import { withEventCapture } from "@rat-stack/events";',
-      'export { memoryEvents } from "@rat-stack/events/site";',
-    ]) {
-      for (const area of [
-        "apps/site/src",
-        "apps/site/test",
-        "packages/intake-live/src",
-      ]) {
-        expectRuleSoft(
-          lintFixture(area, source),
-          "This module reaches the events cartridge directly."
-        );
-      }
-
-      expect(lintFixture("packages/events/test", source).status).toBe(0);
-    }
   });
 
   it("blocks package imports from application code", () => {
@@ -304,7 +222,7 @@ describe("architecture boundary rules", () => {
     ["Cloudflare Workers", "cloudflare:workers"],
     ["server-only packages", "server-only"],
     ["server-marked modules", "./database.server.js"],
-    ["infra app modules", "@rat-stack/infra"],
+    ["infra app modules", "@chromescribe/infra"],
   ])("blocks %s imports in feature modules", (_name, specifier) => {
     const result = lintFixture(
       "apps/cli/src/features",
@@ -346,7 +264,7 @@ describe("architecture boundary rules", () => {
     (area) => {
       const result = lintFixture(
         area,
-        'import * as contracts from "@rat-stack/core/contracts";\nimport { toRpcGroup } from "@rat-stack/capability/rpc-group";\n\nexport const browserContract = { contracts, toRpcGroup };\n'
+        'import * as contracts from "@chromescribe/core/contracts";\nimport { toRpcGroup } from "@chromescribe/capability/rpc-group";\n\nexport const browserContract = { contracts, toRpcGroup };\n'
       );
 
       expect(result.status).toBe(0);
@@ -363,11 +281,11 @@ describe("architecture boundary rules", () => {
   });
 
   it.each([
-    ["the core implementation barrel", "@rat-stack/core"],
+    ["the core implementation barrel", "@chromescribe/core"],
     ["a renamed core implementation barrel", "@sample/core"],
     [
       "the capability implementation entry point",
-      "@rat-stack/capability/implement",
+      "@chromescribe/capability/implement",
     ],
     [
       "a renamed capability implementation entry point",
@@ -727,68 +645,56 @@ describe("architecture boundary rules", () => {
     expect(binding.status).toBe(0);
   });
 
-  it("keeps devtools and test people out of production code", () => {
+  it("keeps devtools out of production code", () => {
     const worker = lintFixture(
-      "apps/web/src/server",
-      'import { devtools } from "@rat-stack/devtools";\n\nexport const tools = devtools;\n'
-    );
-
-    const testPeople = lintFixture(
-      "apps/site/src",
-      'import { ratTestPerson } from "@rat-stack/auth/devtools";\n\nexport const person = ratTestPerson;\n'
+      "apps/worker/src",
+      'import { devtools } from "@chromescribe/devtools";\n\nexport const tools = devtools;\n'
     );
 
     expectRule(worker, "Devtools and test people");
-    expectRule(testPeople, "Devtools and test people");
   });
 
   it("blocks devtools through require, distribution paths, and production test folders", () => {
     const required = lintFixture(
       "apps/web/src/server",
-      'export const tools = require("@rat-stack/devtools");\n'
+      'export const tools = require("@chromescribe/devtools");\n'
     );
 
-    const authDistribution = lintFixture(
+    const distribution = lintFixture(
       "apps/web/src/server",
-      'import { ratTestPerson } from "@rat-stack/auth/dist/devtools.js";\nexport const person = ratTestPerson;\n'
+      'import { devtools } from "@chromescribe/devtools/dist/index.js";\nexport const tools = devtools;\n'
     );
 
     const sourceTest = lintFixture(
       "apps/web/src/test",
-      'import { devtools } from "@rat-stack/devtools";\nexport const tool = devtools;\n'
-    );
-
-    const authBarrel = lintFixture(
-      "packages/auth/src",
-      'export { ratTestPerson } from "@rat-stack/auth/devtools";\n'
+      'import { devtools } from "@chromescribe/devtools";\nexport const tool = devtools;\n'
     );
 
     const typeImport = lintFixture(
-      "apps/web/src/server",
-      'type Devtools = import("@rat-stack/devtools").Devtools;\nexport type Tools = Devtools;\n'
+      "apps/worker/src",
+      'type Devtools = import("@chromescribe/devtools").Devtools;\nexport type Tools = Devtools;\n'
     );
 
     expectRuleSoft(required, "Devtools and test people");
-    expectRuleSoft(authDistribution, "Devtools and test people");
+    expectRuleSoft(distribution, "Devtools and test people");
     expectRuleSoft(sourceTest, "Devtools and test people");
-    expectRuleSoft(authBarrel, "Devtools and test people");
     expectRuleSoft(typeImport, "Devtools and test people");
   });
 
   it("allows devtools in a dev folder, the CLI, and tests", () => {
     const dev = lintFixture(
       "apps/web/src/dev",
-      'import { ratTestPerson, runAsPerson } from "@rat-stack/auth/devtools";\nimport { devtools } from "@rat-stack/devtools";\n\nexport const wiring = { devtools, ratTestPerson, runAsPerson };\n'
+      'import { devtools } from "@chromescribe/devtools";\n\nexport const wiring = { devtools };\n'
     );
 
     const cli = lintFixture(
       "apps/cli/src",
-      'import { devtools } from "@rat-stack/devtools";\n\nexport const tools = devtools;\n'
+      'import { devtools } from "@chromescribe/devtools";\n\nexport const tools = devtools;\n'
     );
 
     const test = lintFixture(
       "apps/web/test",
-      'import { devtools } from "@rat-stack/devtools";\n\nexport const tools = devtools;\n'
+      'import { devtools } from "@chromescribe/devtools";\n\nexport const tools = devtools;\n'
     );
 
     expect(dev.status).toBe(0);
@@ -813,12 +719,12 @@ describe("architecture boundary rules", () => {
 
     const contracts = lintFixture(
       "apps/web/src/dev/client",
-      'import { devtoolsContracts } from "@rat-stack/devtools/contracts";\n\nexport const contracts = devtoolsContracts;\n'
+      'import { devtoolsContracts } from "@chromescribe/devtools/contracts";\n\nexport const contracts = devtoolsContracts;\n'
     );
 
     const server = lintFixture(
       "apps/web/src/dev/client",
-      'import { devtools } from "@rat-stack/devtools";\n\nexport const tools = devtools;\n'
+      'import { devtools } from "@chromescribe/devtools";\n\nexport const tools = devtools;\n'
     );
 
     expect(overlay.status).toBe(0);

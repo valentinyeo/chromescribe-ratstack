@@ -9,19 +9,19 @@ import {
   flagPartition,
   validateFlagScope,
   validateFlagChangeQuery,
-} from "@rat-stack/core/flag-control";
-import type { ListFlagChangesInput } from "@rat-stack/core/flag-control";
+} from "@chromescribe/core/flag-control";
+import type { ListFlagChangesInput } from "@chromescribe/core/flag-control";
 import {
   FlagStateStore,
   flagLedgerEngine,
-} from "@rat-stack/core/flag-ledger-engine";
+} from "@chromescribe/core/flag-ledger-engine";
 import {
   FlagStorageError,
   Flags,
   decodeFlag,
   InvalidFlagValue,
-} from "@rat-stack/core/flags";
-import type { Flag } from "@rat-stack/core/flags";
+} from "@chromescribe/core/flags";
+import type { Flag } from "@chromescribe/core/flags";
 import { Clock, Effect, Layer, Schema } from "effect";
 
 import { InvalidFlagJournal } from "./invalid-flag-journal.js";

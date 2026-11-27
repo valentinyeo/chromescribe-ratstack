@@ -1,4 +1,4 @@
-import type { PlainSchema } from "@rat-stack/capability";
+import type { PlainSchema } from "@chromescribe/capability";
 import type { Context } from "effect";
 
 export interface RunAs<Identifier, Value> {

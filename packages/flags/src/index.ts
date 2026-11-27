@@ -1,12 +1,12 @@
-export { defineFlag, Flags } from "@rat-stack/core/flags";
+export { defineFlag, Flags } from "@chromescribe/core/flags";
 
-export type { Flag, FlagContext } from "@rat-stack/core/flags";
+export type { Flag, FlagContext } from "@chromescribe/core/flags";
 
 export {
   flagCapabilities,
   getFlag,
   listFlags,
-} from "@rat-stack/core/flag-capabilities";
+} from "@chromescribe/core/flag-capabilities";
 
 export {
   evaluateFlag,

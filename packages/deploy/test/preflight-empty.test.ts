@@ -1,5 +1,5 @@
+import { Approval } from "@chromescribe/capability/approval";
 import { expect, it } from "@effect/vitest";
-import { Approval } from "@rat-stack/capability/approval";
 import { PlatformServices } from "alchemy/Util/PlatformServices";
 import { ConfigProvider, Effect, Layer } from "effect";
 import * as HttpClient from "effect/http/HttpClient";
@@ -44,13 +44,7 @@ it.effect(
 
       expect(verdict.outcome).toBe("refused");
       expect(verdict.step).toBe("preflight");
-      expect(verdict.keys).toStrictEqual([
-        "EMAIL_FORWARD_TO",
-        "ALCHEMY_PROFILE",
-        "EVENTS_ENABLED",
-        "EVENTS_IDENTITY_MODE",
-        "EVENTS_SINK_TOKEN",
-      ]);
+      expect(verdict.keys).toStrictEqual(["ALCHEMY_PROFILE"]);
       expect(verdict.rows).toStrictEqual([]);
       expect(requests).toStrictEqual([]);
     })

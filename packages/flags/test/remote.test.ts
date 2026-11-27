@@ -1,5 +1,5 @@
+import { FlagScopeMismatch, FlagStorageError } from "@chromescribe/core/flags";
 import { expect, it } from "@effect/vitest";
-import { FlagScopeMismatch, FlagStorageError } from "@rat-stack/core/flags";
 import { encodeRpcError } from "alchemy/Rpc";
 import { Effect, Schema } from "effect";
 

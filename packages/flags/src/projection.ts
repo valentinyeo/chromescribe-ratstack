@@ -1,5 +1,5 @@
-import { FlagPosition } from "@rat-stack/core/flag-control";
-import { FlagStorageError } from "@rat-stack/core/flags";
+import { FlagPosition } from "@chromescribe/core/flag-control";
+import { FlagStorageError } from "@chromescribe/core/flags";
 import { Clock, Effect, Schema } from "effect";
 
 import { flagValueKey } from "./kv.js";

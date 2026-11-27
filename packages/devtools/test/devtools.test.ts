@@ -1,4 +1,3 @@
-import { describe, expect, it } from "@effect/vitest";
 import {
   Approval,
   aroundHandlers,
@@ -9,15 +8,16 @@ import {
   toExecuteCapability,
   toRpc,
   toToolkit,
-} from "@rat-stack/capability";
-import type { AnyContract } from "@rat-stack/capability";
-import { watchActor } from "@rat-stack/capability/actor-watch";
+} from "@chromescribe/capability";
+import type { AnyContract } from "@chromescribe/capability";
+import { watchActor } from "@chromescribe/capability/actor-watch";
 import type {
   ActorEvent,
   WatchableActor,
-} from "@rat-stack/capability/actor-watch";
-import { CallWatch } from "@rat-stack/capability/call-watch";
-import type { CallWatchService } from "@rat-stack/capability/call-watch";
+} from "@chromescribe/capability/actor-watch";
+import { CallWatch } from "@chromescribe/capability/call-watch";
+import type { CallWatchService } from "@chromescribe/capability/call-watch";
+import { describe, expect, it } from "@effect/vitest";
 import { Clock, Effect, Layer, Schema, Stream } from "effect";
 import { Tool } from "effect/ai";
 import { RpcTest } from "effect/rpc";

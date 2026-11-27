@@ -1,5 +1,5 @@
-import { gateOutcome } from "@rat-stack/check-harness";
-import type { Verdict } from "@rat-stack/check-harness";
+import { gateOutcome } from "@chromescribe/check-harness";
+import type { Verdict } from "@chromescribe/check-harness";
 import { Effect, Option, Schema } from "effect";
 
 import { DeployStepError } from "./contracts.js";

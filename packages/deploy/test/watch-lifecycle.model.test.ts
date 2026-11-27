@@ -1,6 +1,6 @@
+import { Approval } from "@chromescribe/capability/approval";
+import type { Verdict } from "@chromescribe/check-harness";
 import { describe, expect, it } from "@effect/vitest";
-import { Approval } from "@rat-stack/capability/approval";
-import type { Verdict } from "@rat-stack/check-harness";
 import {
   Clock,
   ConfigProvider,

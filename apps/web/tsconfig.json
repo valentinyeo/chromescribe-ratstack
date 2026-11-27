@@ -2,18 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "lib": [
-      "ES2023",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "types": [
-      "node",
-      "vite/client"
-    ],
+    "types": ["node", "vite/client"],
     "plugins": [
       {
         "name": "@effect/language-service",
@@ -25,10 +18,5 @@
       }
     ]
   },
-  "include": [
-    "src/**/*.ts",
-    "test/**/*.ts",
-    "*.config.ts",
-    "stylex.ts"
-  ]
+  "include": ["src/**/*.ts", "test/**/*.ts", "*.config.ts", "stylex.ts"]
 }

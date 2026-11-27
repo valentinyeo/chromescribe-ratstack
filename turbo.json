@@ -1,33 +1,19 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalDependencies": [
-    "tsconfig.base.json"
-  ],
-  "globalPassThroughEnv": [
-    "pnpm_config_pm_on_fail"
-  ],
+  "globalDependencies": ["tsconfig.base.json"],
+  "globalPassThroughEnv": ["pnpm_config_pm_on_fail"],
   "remoteCache": {
     "signature": true
   },
   "tasks": {
     "typecheck": {
-      "dependsOn": [
-        "^typecheck"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!**/*.md"
-      ],
+      "dependsOn": ["^typecheck"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "outputs": []
     },
     "typecheck:tsc": {
-      "dependsOn": [
-        "^typecheck:tsc"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!**/*.md"
-      ],
+      "dependsOn": ["^typecheck:tsc"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "outputs": []
     },
     "//#typecheck:tsc-scripts": {
@@ -41,20 +27,12 @@
       "outputs": []
     },
     "@chromescribe/web#typecheck:tsc": {
-      "dependsOn": [
-        "^build",
-        "^typecheck:tsc"
-      ],
+      "dependsOn": ["^build", "^typecheck:tsc"],
       "outputs": []
     },
     "typecheck:fast": {
-      "dependsOn": [
-        "^typecheck:fast"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!**/*.md"
-      ],
+      "dependsOn": ["^typecheck:fast"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "outputs": []
     },
     "//#typecheck:fast-scripts": {
@@ -68,31 +46,17 @@
       "outputs": []
     },
     "@chromescribe/web#typecheck:fast": {
-      "dependsOn": [
-        "^build",
-        "^typecheck:fast"
-      ],
+      "dependsOn": ["^build", "^typecheck:fast"],
       "outputs": []
     },
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": ["dist/**"]
     },
     "test": {
-      "dependsOn": [
-        "build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!**/*.md"
-      ],
+      "dependsOn": ["build"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "outputs": []
     },
     "//#lint": {
@@ -110,17 +74,12 @@
       "outputs": []
     },
     "//#test:turbo-summary": {
-      "inputs": [
-        "scripts/turbo-summary*.ts",
-        "package.json"
-      ],
+      "inputs": ["scripts/turbo-summary*.ts", "package.json"],
       "outputs": []
     },
     "//#check:landmines": {
       "cache": false,
-      "passThroughEnv": [
-        "LANDMINES_BASE"
-      ],
+      "passThroughEnv": ["LANDMINES_BASE"],
       "outputs": []
     },
     "//#check:turbo-inputs": {
@@ -158,16 +117,11 @@
       ]
     },
     "@chromescribe/web#typecheck": {
-      "dependsOn": [
-        "^build",
-        "^typecheck"
-      ],
+      "dependsOn": ["^build", "^typecheck"],
       "outputs": []
     },
     "@chromescribe/core#test": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "outputs": [],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -182,9 +136,7 @@
       ]
     },
     "@chromescribe/core#typecheck": {
-      "dependsOn": [
-        "^typecheck"
-      ],
+      "dependsOn": ["^typecheck"],
       "outputs": [],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -195,9 +147,7 @@
       ]
     },
     "@chromescribe/core#typecheck:tsc": {
-      "dependsOn": [
-        "^typecheck:tsc"
-      ],
+      "dependsOn": ["^typecheck:tsc"],
       "outputs": [],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -208,9 +158,7 @@
       ]
     },
     "@chromescribe/core#typecheck:fast": {
-      "dependsOn": [
-        "^typecheck:fast"
-      ],
+      "dependsOn": ["^typecheck:fast"],
       "outputs": [],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -221,9 +169,7 @@
       ]
     },
     "@chromescribe/cli#test": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "outputs": [],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -232,51 +178,27 @@
       ]
     },
     "@chromescribe/cli#build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "dist/**"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "inputs": ["$TURBO_DEFAULT$"]
     },
     "@chromescribe/deploy#typecheck": {
-      "dependsOn": [
-        "^typecheck"
-      ],
+      "dependsOn": ["^typecheck"],
       "outputs": [],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!**/*.md"
-      ]
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
     "@chromescribe/deploy#typecheck:tsc": {
-      "dependsOn": [
-        "^typecheck:tsc"
-      ],
+      "dependsOn": ["^typecheck:tsc"],
       "outputs": [],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!**/*.md"
-      ]
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
     "@chromescribe/deploy#typecheck:fast": {
-      "dependsOn": [
-        "^typecheck:fast"
-      ],
+      "dependsOn": ["^typecheck:fast"],
       "outputs": [],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!**/*.md"
-      ]
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
     "@chromescribe/deploy#test": {
-      "dependsOn": [
-        "build",
-        "@chromescribe/web#build"
-      ],
+      "dependsOn": ["build", "@chromescribe/web#build"],
       "outputs": [],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -286,19 +208,12 @@
       ]
     },
     "@chromescribe/web#test": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "outputs": [],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "$TURBO_ROOT$/*"
-      ]
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/*"]
     },
     "@chromescribe/worker#test": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "outputs": [],
       "inputs": [
         "$TURBO_DEFAULT$",

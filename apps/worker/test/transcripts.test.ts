@@ -1,9 +1,8 @@
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- This adapter seam reads its immutable fixture schema and uses the host runtime.
 import { readFileSync } from "node:fs";
-// @effect-diagnostics-next-line nodeBuiltinImport:off -- This adapter seam reads its immutable fixture schema and uses the host runtime.
 import { DatabaseSync } from "node:sqlite";
 
-import { TranscriptContentStore } from "@chromescribe/core";
+import { TranscriptContentStore } from "@chromescribe/core/transcripts";
 import { expect, it } from "@effect/vitest";
 import { Effect, Layer, Schema } from "effect";
 
@@ -52,7 +51,7 @@ const decodeResponse = <
     Effect.flatMap(Schema.decodeUnknownEffect(schema))
   );
 
-const fixture = Effect.fn("fixture")(function* fixture(gate = "0") {
+const fixture = Effect.fn("fixture")(function* fixture(gate: string = "0") {
   const db = yield* Effect.acquireRelease(
     Effect.sync(() => {
       const database = new DatabaseSync(":memory:");
@@ -138,7 +137,7 @@ const fixture = Effect.fn("fixture")(function* fixture(gate = "0") {
 
 it.effect("serves bounded formatted pages, filters and conditional ETags", () =>
   Effect.gen(function* pages() {
-    const { call } = yield* fixture();
+    const { call, DB } = yield* fixture();
     const first = yield* call("/api/transcripts?limit=3");
     const body = yield* decodeResponse(ListBody, first);
     expect(body.data.map((row) => row.id)).toEqual([7, 6, 5]);
@@ -155,6 +154,13 @@ it.effect("serves bounded formatted pages, filters and conditional ETags", () =>
 
     expect(again.status).toBe(304);
     expect(yield* Effect.promise(() => again.text())).toBe("");
+    yield* Effect.promise(() => DB.prepare("UPDATE transcripts SET title = ? WHERE id = ?").bind("Changed", 7).all());
+
+    const changed = yield* call("/api/transcripts?limit=3", { headers: { "If-None-Match": etag ?? "" } });
+
+    expect(changed.status).toBe(200);
+    expect(changed.headers.get("ETag")).not.toBe(etag);
+    expect(yield* Effect.promise(() => changed.text())).toContain("Changed");
     expect(
       (yield* decodeResponse(
         ListBody,
@@ -340,6 +346,7 @@ it.effect(
       expect(report.headers.has("Access-Control-Allow-Origin")).toBe(false);
 
       for (const value of [
+        // oxlint-disable-next-line no-script-url -- This malicious fixture proves source redirects reject script URLs.
         "javascript:alert(1)",
         "//example.com",
         "https://",

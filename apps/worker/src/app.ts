@@ -1,10 +1,10 @@
 import { toHttpApi, toRpc } from "@chromescribe/capability";
-import { transcriptCapabilities } from "@chromescribe/core";
+import { transcriptCapabilities } from "@chromescribe/core/transcript-capabilities";
 import type {
   AccessVerifier,
   TranscriptContentStore,
   TranscriptRepository,
-} from "@chromescribe/core";
+} from "@chromescribe/core/transcripts";
 import { Effect, Layer } from "effect";
 import {
   HttpRouter,
@@ -23,10 +23,7 @@ const capabilities = [health, ...transcriptCapabilities] as const;
 
 export const rpc = toRpc(capabilities);
 
-export const http = toHttpApi(
-  "ChromeScribeTranscripts",
-  capabilities
-);
+export const http = toHttpApi("ChromeScribeTranscripts", capabilities);
 
 const compatibility = HttpRouter.add(
   "GET",
@@ -42,7 +39,7 @@ const compatibility = HttpRouter.add(
 
 const gate = HttpRouter.middleware(
   (httpEffect) =>
-    Effect.gen(function* gate() {
+    Effect.gen(function* checkAccess() {
       const incoming = yield* HttpServerRequest.HttpServerRequest;
       const request = yield* HttpServerRequest.toWeb(incoming);
       const denied = yield* accessGate(request);
@@ -50,6 +47,7 @@ const gate = HttpRouter.middleware(
       if (denied) {
         return HttpServerResponse.fromWeb(denied);
       }
+
       return yield* httpEffect;
     }),
   { global: true }
@@ -72,7 +70,10 @@ export const transcriptServer = (
       Layer.provide(RpcSerialization.layerJson)
     ),
     gate
-  ).pipe(Layer.provideMerge(services), Layer.provideMerge(HttpServer.layerServices));
+  ).pipe(
+    Layer.provideMerge(services),
+    Layer.provideMerge(HttpServer.layerServices)
+  );
 
   return HttpRouter.toWebHandler(routes, { disableLogger: true });
 };

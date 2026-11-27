@@ -2,7 +2,7 @@ import {
   TranscriptContentNotFound,
   TranscriptContentStore,
   TranscriptStorageError,
-} from "@chromescribe/core";
+} from "@chromescribe/core/transcripts";
 import { transcriptRepositoryLayer } from "@chromescribe/database";
 import { Effect, Layer, Schema } from "effect";
 
@@ -57,6 +57,7 @@ export const r2ContentLayer = (bucket: TranscriptBucket) => {
     if (!object) {
       return yield* new TranscriptContentNotFound({ key });
     }
+
     return object;
   });
 
@@ -86,7 +87,7 @@ export const r2ContentLayer = (bucket: TranscriptBucket) => {
 
         return {
           bytes: new Uint8Array(buffer),
-          contentType: object.httpMetadata?.contentType || "image/jpeg",
+          contentType: object.httpMetadata?.contentType ?? "image/jpeg",
         };
       }
     ),

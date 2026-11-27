@@ -39,6 +39,7 @@ jobs:
       - name: Save safe repairs for failed checks
         if: failure()
         run: |
+          pnpm exec oxfmt .
           pnpm exec ultracite fix || true
           pnpm exec oxfmt .
           git diff --binary > /tmp/formatting.patch

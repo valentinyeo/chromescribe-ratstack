@@ -5,8 +5,8 @@ import { FileStatsError, FileStatsSchema } from "./stats.js";
 import {
   CategoryCount,
   TranscriptAround,
-  TranscriptDetail,
-  TranscriptFailure,
+  TranscriptDetailSchema,
+  TranscriptFailureSchema,
   TranscriptListInput,
   TranscriptListResult,
 } from "./transcripts.js";
@@ -14,7 +14,7 @@ import {
 export const listTranscriptsContract = defineContract("listTranscripts", {
   annotations: { idempotent: true, readOnly: true },
   description: "Read a bounded page of transcript metadata",
-  failure: TranscriptFailure,
+  failure: TranscriptFailureSchema,
   input: TranscriptListInput,
   output: TranscriptListResult,
 });
@@ -22,9 +22,9 @@ export const listTranscriptsContract = defineContract("listTranscripts", {
 export const getTranscriptContract = defineContract("getTranscript", {
   annotations: { idempotent: true, readOnly: true },
   description: "Read one transcript's metadata",
-  failure: TranscriptFailure,
+  failure: TranscriptFailureSchema,
   input: Schema.Struct({ id: Schema.Int }),
-  output: TranscriptDetail,
+  output: TranscriptDetailSchema,
 });
 
 export const getTranscriptAroundContract = defineContract(
@@ -32,7 +32,7 @@ export const getTranscriptAroundContract = defineContract(
   {
     annotations: { idempotent: true, readOnly: true },
     description: "Read the transcript's neighbours and position",
-    failure: TranscriptFailure,
+    failure: TranscriptFailureSchema,
     input: Schema.Struct({ id: Schema.Int }),
     output: TranscriptAround,
   }
@@ -43,7 +43,7 @@ export const getTranscriptContentContract = defineContract(
   {
     annotations: { idempotent: true, readOnly: true },
     description: "Read the stored transcript markdown",
-    failure: TranscriptFailure,
+    failure: TranscriptFailureSchema,
     input: Schema.Struct({ id: Schema.Int }),
     output: Schema.String,
   }
@@ -52,15 +52,15 @@ export const getTranscriptContentContract = defineContract(
 export const searchTranscriptsContract = defineContract("searchTranscripts", {
   annotations: { idempotent: true, readOnly: true },
   description: "Search transcript titles, channels and video identifiers",
-  failure: TranscriptFailure,
+  failure: TranscriptFailureSchema,
   input: Schema.Struct({ query: Schema.NonEmptyString }),
-  output: Schema.Array(TranscriptDetail),
+  output: Schema.Array(TranscriptDetailSchema),
 });
 
 export const listCategoriesContract = defineContract("listCategories", {
   annotations: { idempotent: true, readOnly: true },
   description: "Read transcript category counts",
-  failure: TranscriptFailure,
+  failure: TranscriptFailureSchema,
   input: Schema.Struct({}),
   output: Schema.Array(CategoryCount),
 });
@@ -70,7 +70,7 @@ export const getTranscriptThumbnailContract = defineContract(
   {
     annotations: { idempotent: true, readOnly: true },
     description: "Read a cached transcript thumbnail",
-    failure: TranscriptFailure,
+    failure: TranscriptFailureSchema,
     input: Schema.Struct({ videoId: Schema.String }),
     output: Schema.Struct({
       bytes: Schema.Uint8ArrayFromBase64,

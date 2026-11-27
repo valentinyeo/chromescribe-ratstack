@@ -1,13 +1,12 @@
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- This adapter seam reads its immutable fixture schema and uses the host runtime.
 import { readFileSync } from "node:fs";
-// @effect-diagnostics-next-line nodeBuiltinImport:off -- This adapter seam reads its immutable fixture schema and uses the host runtime.
 import { DatabaseSync } from "node:sqlite";
 
 import {
   TranscriptNotFound,
   TranscriptRepository,
   TranscriptStorageError,
-} from "@chromescribe/core";
+} from "@chromescribe/core/transcripts";
 import { expect, it } from "@effect/vitest";
 import { Effect, Layer, Schema } from "effect";
 
@@ -41,6 +40,7 @@ const sqliteLayer = Layer.unwrap(
             "2025-05-05 05:05:05"
           );
         }
+
         return connection;
       }),
       (connection) =>
@@ -66,8 +66,8 @@ const sqliteLayer = Layer.unwrap(
   })
 );
 
-it.layer(sqliteLayer)("transcript repository", (it) => {
-  it.effect(
+it.layer(sqliteLayer)("transcript repository", (test) => {
+  test.effect(
     "pages tied timestamps without gaps, exposes only card fields and reports total",
     () =>
       Effect.gen(function* pagination() {
@@ -82,7 +82,7 @@ it.layer(sqliteLayer)("transcript repository", (it) => {
       })
   );
 
-  it.effect("clamps page limits and negative offsets", () =>
+  test.effect("clamps page limits and negative offsets", () =>
     Effect.gen(function* bounds() {
       const repository = yield* TranscriptRepository;
       expect((yield* repository.list({ limit: 9000 })).data).toHaveLength(500);
@@ -95,7 +95,7 @@ it.layer(sqliteLayer)("transcript repository", (it) => {
     })
   );
 
-  it.effect("locates adjacent records and both ends with timestamp ties", () =>
+  test.effect("locates adjacent records and both ends with timestamp ties", () =>
     Effect.gen(function* around() {
       const repository = yield* TranscriptRepository;
       expect(yield* repository.getAround(519)).toEqual({
@@ -119,7 +119,7 @@ it.layer(sqliteLayer)("transcript repository", (it) => {
     })
   );
 
-  it.effect(
+  test.effect(
     "filters video identifiers and channels before pagination and count",
     () =>
       Effect.gen(function* filters() {
@@ -139,7 +139,7 @@ it.layer(sqliteLayer)("transcript repository", (it) => {
       })
   );
 
-  it.effect(
+  test.effect(
     "searches title, channel and video identifier outside the first page",
     () =>
       Effect.gen(function* search() {
@@ -156,7 +156,7 @@ it.layer(sqliteLayer)("transcript repository", (it) => {
       })
   );
 
-  it.effect("counts nonempty categories", () =>
+  test.effect("counts nonempty categories", () =>
     Effect.gen(function* categories() {
       const repository = yield* TranscriptRepository;
       expect(yield* repository.listCategories()).toEqual([
@@ -166,7 +166,7 @@ it.layer(sqliteLayer)("transcript repository", (it) => {
     })
   );
 
-  it.effect("returns a typed missing transcript failure", () =>
+  test.effect("returns a typed missing transcript failure", () =>
     Effect.gen(function* missing() {
       const repository = yield* TranscriptRepository;
       expect(

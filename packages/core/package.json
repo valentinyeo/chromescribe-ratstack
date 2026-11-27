@@ -43,6 +43,16 @@
       "types": "./src/contracts.ts",
       "import": "./dist/contracts.js",
       "default": "./dist/contracts.js"
+    },
+    "./transcripts": {
+      "types": "./src/transcripts.ts",
+      "import": "./dist/transcripts.js",
+      "default": "./dist/transcripts.js"
+    },
+    "./transcript-capabilities": {
+      "types": "./src/transcript-capabilities.ts",
+      "import": "./dist/transcript-capabilities.js",
+      "default": "./dist/transcript-capabilities.js"
     }
   },
   "scripts": {

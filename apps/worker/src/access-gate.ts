@@ -1,4 +1,4 @@
-import { AccessVerifier } from "@chromescribe/core";
+import { AccessVerifier } from "@chromescribe/core/transcripts";
 import { Clock, Effect, Layer, Ref, Schema } from "effect";
 import { FetchHttpClient, HttpClient, HttpClientResponse } from "effect/http";
 
@@ -37,10 +37,10 @@ const Jwks = Schema.Struct({
 
 const algorithm = { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" };
 
-class AccessVerificationError extends Schema.TaggedError<AccessVerificationError, { readonly brand: unique symbol }>()(
-  "AccessVerificationError",
-  { cause: Schema.Defect() }
-) {}
+class AccessVerificationError extends Schema.TaggedError<
+  AccessVerificationError,
+  { readonly brand: unique symbol }
+>()("AccessVerificationError", { cause: Schema.Defect() }) {}
 
 const verifyAssertion = Effect.fn("AccessVerifier.verifyAssertion")(
   function* verifyAssertion(
@@ -51,20 +51,21 @@ const verifyAssertion = Effect.fn("AccessVerifier.verifyAssertion")(
     const parts = assertion.split(".");
     const [head, body, signature] = parts;
 
-    if (parts.length !== 3 || !head || !body || !signature) {
+    if (parts.length !== 3 || head === undefined || head === "" || body === undefined || body === "" || signature === undefined || signature === "") {
       return false;
     }
-    const headerJson = yield* Schema.decodeEffect(
-      Schema.StringFromBase64Url
-    )(head);
 
-    const payloadJson = yield* Schema.decodeEffect(
-      Schema.StringFromBase64Url
-    )(body);
+    const headerJson = yield* Schema.decodeEffect(Schema.StringFromBase64Url)(
+      head
+    );
 
-    const header = yield* Schema.decodeEffect(
-      Schema.fromJsonString(JwtHeader)
-    )(headerJson);
+    const payloadJson = yield* Schema.decodeEffect(Schema.StringFromBase64Url)(
+      body
+    );
+
+    const header = yield* Schema.decodeEffect(Schema.fromJsonString(JwtHeader))(
+      headerJson
+    );
 
     const payload = yield* Schema.decodeEffect(
       Schema.fromJsonString(JwtPayload)
@@ -80,20 +81,22 @@ const verifyAssertion = Effect.fn("AccessVerifier.verifyAssertion")(
     ) {
       return false;
     }
+
     const jwk = keys.keys.find((key) => key.kid === header.kid);
 
     if (!jwk) {
       return false;
     }
+
     const key = yield* Effect.tryPromise({
       try: () =>
         crypto.subtle.importKey("jwk", jwk, algorithm, false, ["verify"]),
       catch: (cause) => new AccessVerificationError({ cause }),
     });
 
-    const bytes = yield* Schema.decodeEffect(
-      Schema.Uint8ArrayFromBase64Url
-    )(signature);
+    const bytes = yield* Schema.decodeEffect(Schema.Uint8ArrayFromBase64Url)(
+      signature
+    );
 
     return yield* Effect.tryPromise({
       try: () =>
@@ -115,7 +118,7 @@ export const accessVerifierLayer = (settings: AccessSettings) =>
       const client = yield* HttpClient.HttpClient;
 
       const fetchKeys = client
-        .get(settings.ACCESS_CERTS_URL || accessCertsUrl)
+        .get(settings.ACCESS_CERTS_URL ?? accessCertsUrl)
         .pipe(
           Effect.flatMap(HttpClientResponse.filterStatusOk),
           Effect.flatMap(HttpClientResponse.schemaBodyJson(Jwks))
@@ -149,11 +152,13 @@ export const accessVerifierLayer = (settings: AccessSettings) =>
           if (settings.CHRO10_API_GATE === "0") {
             return true;
           }
+
           const audience = settings.ACCESS_AUD?.trim();
 
-          if (!assertion || !audience) {
+          if (assertion === null || assertion === "" || audience === undefined || audience === "") {
             return false;
           }
+
           return yield* getKeys.pipe(
             Effect.flatMap((keys) =>
               verifyAssertion(assertion, audience, keys)

@@ -27,6 +27,7 @@ const publicReport = Effect.fn("publicReport")(function* publicReport(
   if (!object) {
     return new Response("Report not found", { status: 404 });
   }
+
   const html = yield* Effect.promise(() => object.text());
 
   return new Response(html, {
@@ -34,14 +35,18 @@ const publicReport = Effect.fn("publicReport")(function* publicReport(
   });
 });
 
-export const handleRequest = (request: Request, env: WorkerBindings): Promise<Response> => {
-  const report = /^\/reports\/([a-f0-9]{12})$/u.exec(
+export const handleRequest = (
+  request: Request,
+  env: WorkerBindings
+): Promise<Response> => {
+  const report = /^\/reports\/(?<id>[a-f0-9]{12})$/u.exec(
     new URL(request.url).pathname
   );
 
-  if (request.method === "GET" && report?.[1]) {
-    return Effect.runPromise(publicReport(env.TRANSCRIPTS, report[1]));
+  if (request.method === "GET" && report?.groups?.id !== undefined) {
+    return Effect.runPromise(publicReport(env.TRANSCRIPTS, report.groups.id));
   }
+
   let server = servers.get(env);
 
   if (!server) {
@@ -59,6 +64,8 @@ export const handleRequest = (request: Request, env: WorkerBindings): Promise<Re
 };
 
 export default {
-  fetch: (request: Request, env: Workers.InferEnv<typeof ChromeScribeWorker>): Promise<Response> =>
-    handleRequest(request, env),
+  fetch: (
+    request: Request,
+    env: Workers.InferEnv<typeof ChromeScribeWorker>
+  ): Promise<Response> => handleRequest(request, env),
 };

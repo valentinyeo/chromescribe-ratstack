@@ -1,10 +1,8 @@
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- This adapter seam reads its immutable fixture schema and uses the host runtime.
 import { readFileSync } from "node:fs";
-// @effect-diagnostics-next-line nodeBuiltinImport:off -- This adapter seam reads its immutable fixture schema and uses the host runtime.
-import { pathToFileURL } from "node:url";
 
 import { expect, it } from "@effect/vitest";
-import { Effect, Schema } from "effect";
+import { Effect, Predicate, Schema } from "effect";
 
 import type { WebsiteBindings } from "../src/server/website-bindings.js";
 
@@ -18,6 +16,12 @@ interface BuiltWebsite {
     ) => Promise<Response>;
   };
 }
+
+const BuiltWebsiteSchema = Schema.Struct({
+  default: Schema.Struct({
+    fetch: Schema.declare<BuiltWebsite["default"]["fetch"]>((input): input is BuiltWebsite["default"]["fetch"] => Predicate.isFunction(input)),
+  }),
+});
 
 it.effect(
   "forwards API and RPC bodies and Access assertions through the built service binding",
@@ -35,9 +39,8 @@ it.effect(
         `../dist/server/${manifest.serverEntry}`,
         import.meta.url
       );
-      const website: BuiltWebsite = yield* Effect.promise(
-        () => import(pathToFileURL(entry.pathname).href)
-      );
+      const loaded: unknown = yield* Effect.promise(() => import(entry.href));
+      const website = yield* Schema.decodeUnknownEffect(BuiltWebsiteSchema)(loaded);
       const calls: Request[] = [];
 
       const bindings: WebsiteBindings = {

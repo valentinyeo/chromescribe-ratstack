@@ -1,12 +1,12 @@
-import type { TranscriptListInput } from "@chromescribe/core";
+import type { TranscriptListInput } from "@chromescribe/core/transcripts";
 import {
   CategoryCount,
-  TranscriptDetail,
+  TranscriptDetailSchema,
   TranscriptNotFound,
   TranscriptRepository,
   TranscriptStorageError,
-  TranscriptSummary,
-} from "@chromescribe/core";
+  TranscriptSummarySchema,
+} from "@chromescribe/core/transcripts";
 import { Effect, Layer, Schema } from "effect";
 
 export interface TranscriptSql {
@@ -33,7 +33,7 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
     ) {
       const rows = yield* sql.query(statement, params);
 
-      return yield* Schema.decodeUnknownEffect(Schema.Array(TranscriptSummary))(
+      return yield* Schema.decodeUnknownEffect(Schema.Array(TranscriptSummarySchema))(
         rows
       ).pipe(
         Effect.mapError(
@@ -50,7 +50,7 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
   ) {
     const rows = yield* sql.query(statement, params);
 
-    return yield* Schema.decodeUnknownEffect(Schema.Array(TranscriptDetail))(
+    return yield* Schema.decodeUnknownEffect(Schema.Array(TranscriptDetailSchema))(
       rows
     ).pipe(
       Effect.mapError(
@@ -88,11 +88,12 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
       [id]
     );
 
-    const row = rows[0];
+    const [row] = rows;
 
     if (!row) {
       return yield* new TranscriptNotFound({ id });
     }
+
     return row;
   });
 
@@ -129,12 +130,12 @@ export const transcriptRepositoryLayer = (sql: TranscriptSql) => {
       const clauses: string[] = [];
       const params: (string | number)[] = [];
 
-      if (input.videoId) {
+      if (input.videoId !== undefined && input.videoId !== "") {
         clauses.push("video_id = ?");
         params.push(input.videoId);
       }
 
-      if (input.channel) {
+      if (input.channel !== undefined && input.channel !== "") {
         clauses.push("channel = ?");
         params.push(input.channel);
       }

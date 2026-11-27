@@ -13,23 +13,18 @@ import {
 import { TranscriptContentStore, TranscriptRepository } from "./transcripts.js";
 
 export const listTranscripts = implement(listTranscriptsContract, (input) =>
-  Effect.flatMap(TranscriptRepository, (repository) => repository.list(input))
+  TranscriptRepository.pipe(Effect.flatMap((repository) => repository.list(input)))
 );
 
 export const getTranscript = implement(getTranscriptContract, ({ id }) =>
-  Effect.flatMap(TranscriptRepository, (repository) => repository.getById(id))
+  TranscriptRepository.pipe(Effect.flatMap((repository) => repository.getById(id)))
 );
 
-export const getTranscriptAround = implement(
-  getTranscriptAroundContract,
-  ({ id }) =>
-    Effect.flatMap(TranscriptRepository, (repository) =>
-      repository.getAround(id)
-    )
+export const getTranscriptAround = implement(getTranscriptAroundContract, ({ id }) =>
+  TranscriptRepository.pipe(Effect.flatMap((repository) => repository.getAround(id)))
 );
 
-export const getTranscriptContent = implement(
-  getTranscriptContentContract,
+export const getTranscriptContent = implement(getTranscriptContentContract,
   Effect.fn("getTranscriptContent")(function* getTranscriptContent({ id }: { readonly id: number }) {
     const repository = yield* TranscriptRepository;
     const content = yield* TranscriptContentStore;
@@ -39,26 +34,16 @@ export const getTranscriptContent = implement(
   })
 );
 
-export const searchTranscripts = implement(
-  searchTranscriptsContract,
-  ({ query }) =>
-    Effect.flatMap(TranscriptRepository, (repository) =>
-      repository.search(query)
-    )
+export const searchTranscripts = implement(searchTranscriptsContract, ({ query }) =>
+  TranscriptRepository.pipe(Effect.flatMap((repository) => repository.search(query)))
 );
 
 export const listCategories = implement(listCategoriesContract, () =>
-  Effect.flatMap(TranscriptRepository, (repository) =>
-    repository.listCategories()
-  )
+  TranscriptRepository.pipe(Effect.flatMap((repository) => repository.listCategories()))
 );
 
-export const getTranscriptThumbnail = implement(
-  getTranscriptThumbnailContract,
-  ({ videoId }) =>
-    Effect.flatMap(TranscriptContentStore, (content) =>
-      content.getThumbnail(videoId)
-    )
+export const getTranscriptThumbnail = implement(getTranscriptThumbnailContract, ({ videoId }) =>
+  TranscriptContentStore.pipe(Effect.flatMap((content) => content.getThumbnail(videoId)))
 );
 
 export const transcriptCapabilities = [

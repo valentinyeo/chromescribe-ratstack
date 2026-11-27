@@ -1,4 +1,7 @@
-import { AccessVerifier } from "@chromescribe/core";
+// @effect-diagnostics-next-line nodeBuiltinImport:off -- Real RSA signing is the Web Crypto boundary under test.
+import { webcrypto } from "node:crypto";
+
+import { AccessVerifier } from "@chromescribe/core/transcripts";
 import { expect, it } from "@effect/vitest";
 import { Clock, Effect } from "effect";
 import { FetchHttpClient } from "effect/http";
@@ -17,7 +20,9 @@ const algorithm = {
   modulusLength: 2048,
   publicExponent: new Uint8Array([1, 0, 1]),
 };
+
 const audience = "test-audience";
+
 const on = { ACCESS_AUD: audience };
 
 interface TestPayload {
@@ -29,39 +34,47 @@ interface TestPayload {
 
 const fixture = Effect.fn("fixture")(function* fixture() {
   const pair = yield* Effect.promise(() =>
-    crypto.subtle.generateKey(algorithm, true, ["sign", "verify"])
+    webcrypto.subtle.generateKey(algorithm, true, ["sign", "verify"])
   );
+
   const other = yield* Effect.promise(() =>
-    crypto.subtle.generateKey(algorithm, true, ["sign", "verify"])
+    webcrypto.subtle.generateKey(algorithm, true, ["sign", "verify"])
   );
+
   const jwk = yield* Effect.promise(() =>
-    crypto.subtle.exportKey("jwk", pair.publicKey)
+    webcrypto.subtle.exportKey("jwk", pair.publicKey)
   );
+
   const now = yield* Clock.currentTimeMillis;
   const good = { aud: [audience], iss: accessIssuer, exp: now / 1000 + 600 };
+
   const sign = Effect.fn("sign")(function* sign(
     payload: TestPayload,
-    key = pair.privateKey,
-    alg = "RS256",
-    kid = "k1"
+    key: webcrypto.CryptoKey = pair.privateKey,
+    alg: string = "RS256",
+    kid: string = "k1"
   ) {
     const head = Buffer.from(JSON.stringify({ alg, kid })).toString(
       "base64url"
     );
+
     const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+
     const signature = yield* Effect.promise(() =>
-      crypto.subtle.sign(
+      webcrypto.subtle.sign(
         algorithm,
         key,
         new TextEncoder().encode(`${head}.${body}`)
       )
     );
+
     return `${head}.${body}.${Buffer.from(signature).toString("base64url")}`;
   });
+
   const gate = (token: string | null, settings: AccessSettings = on) =>
     accessGate(
       new Request("https://next.chromescribe.yeoux.net/api/transcripts", {
-        headers: token ? { "Cf-Access-Jwt-Assertion": token } : {},
+        headers: token !== null ? { "Cf-Access-Jwt-Assertion": token } : {},
       })
     ).pipe(
       Effect.provide(accessVerifierLayer(settings)),
@@ -69,6 +82,7 @@ const fixture = Effect.fn("fixture")(function* fixture() {
         Promise.resolve(Response.json({ keys: [{ ...jwk, kid: "k1" }] }))
       )
     );
+
   return { pair, other, good, sign, gate, now, jwk };
 });
 
@@ -87,6 +101,7 @@ it.effect(
   () =>
     Effect.gen(function* refused() {
       const { good, sign, gate, other, now } = yield* fixture();
+
       const tokens = [
         null,
         "not.a.jwt",
@@ -98,6 +113,7 @@ it.effect(
         yield* sign(good, undefined, "none"),
         yield* sign(good, undefined, "RS256", "unknown"),
       ];
+
       for (const token of tokens) {
         const response = yield* gate(token);
         expect(response?.status).toBe(401);
@@ -117,13 +133,15 @@ it.effect(
     Effect.gen(function* missingAudience() {
       const { good, sign, gate } = yield* fixture();
       const token = yield* sign(good);
+
       for (const settings of [
         {},
         { ACCESS_AUD: "" },
         { ACCESS_AUD: "   " },
         { CHRO10_API_GATE: "1" },
-      ])
+      ]) {
         expect((yield* gate(token, settings))?.status).toBe(401);
+      }
       expect(
         (yield* gate(null, { CHRO10_API_GATE: "unexpected" }))?.status
       ).toBe(401);
@@ -138,6 +156,7 @@ it.effect(
       const { good, sign, gate, now } = yield* fixture();
       const token = yield* sign({ ...good, nbf: now / 1000 + 60 });
       expect((yield* gate(token))?.status).toBe(401);
+
       const denied = yield* accessGate(
         new Request("https://next.chromescribe.yeoux.net/rpc", {
           headers: { "Cf-Access-Jwt-Assertion": yield* sign(good) },
@@ -148,33 +167,40 @@ it.effect(
           Promise.resolve(new Response("unavailable", { status: 503 }))
         )
       );
+
       expect(denied?.status).toBe(401);
     })
 );
 
-it.effect("reuses only completed JWKS results and refreshes after ten minutes", () => Effect.gen(function* cache() {
-  const { good, sign, jwk } = yield* fixture();
-  const token = yield* sign({ ...good, exp: good.exp + 3600 });
-  let fetches = 0;
+it.effect(
+  "reuses only completed JWKS results and refreshes after ten minutes",
+  () =>
+    Effect.gen(function* cache() {
+      const { good, sign, jwk } = yield* fixture();
+      const token = yield* sign({ ...good, exp: good.exp + 3600 });
+      let fetches = 0;
 
-  yield* Effect.gen(function* verifyCached() {
-    const verifier = yield* AccessVerifier;
+      yield* Effect.gen(function* verifyCached() {
+        const verifier = yield* AccessVerifier;
 
-    expect(yield* verifier.verify(token)).toBe(true);
-    expect(yield* verifier.verify(token)).toBe(true);
-    expect(fetches).toBe(1);
-    yield* TestClock.adjust("9 minutes");
-    expect(yield* verifier.verify(token)).toBe(true);
-    expect(fetches).toBe(1);
-    yield* TestClock.adjust("1 minute");
-    expect(yield* verifier.verify(token)).toBe(true);
-    expect(fetches).toBe(2);
-  }).pipe(
-    Effect.provide(accessVerifierLayer(on)),
-    Effect.provideService(FetchHttpClient.Fetch, () => {
-      fetches += 1;
+        expect(yield* verifier.verify(token)).toBe(true);
+        expect(yield* verifier.verify(token)).toBe(true);
+        expect(fetches).toBe(1);
+        yield* TestClock.adjust("9 minutes");
+        expect(yield* verifier.verify(token)).toBe(true);
+        expect(fetches).toBe(1);
+        yield* TestClock.adjust("1 minute");
+        expect(yield* verifier.verify(token)).toBe(true);
+        expect(fetches).toBe(2);
+      }).pipe(
+        Effect.provide(accessVerifierLayer(on)),
+        Effect.provideService(FetchHttpClient.Fetch, () => {
+          fetches += 1;
 
-      return Promise.resolve(Response.json({ keys: [{ ...jwk, kid: "k1" }] }));
+          return Promise.resolve(
+            Response.json({ keys: [{ ...jwk, kid: "k1" }] })
+          );
+        })
+      );
     })
-  );
-}));
+);

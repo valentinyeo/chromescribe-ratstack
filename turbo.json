@@ -98,7 +98,8 @@
         "typecheck",
         "//#lint",
         "//#typecheck-scripts",
-        "//#test:turbo-summary"
+        "//#test:turbo-summary",
+        "//#env:check"
       ],
       "outputs": []
     },
@@ -210,6 +211,18 @@
       "dependsOn": ["build"],
       "outputs": [],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/*"]
+    },
+    "@chromescribe/worker#test": {
+      "dependsOn": ["build"],
+      "outputs": [],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/packages/database/baseline/chromescribe/schema.sql"
+      ]
+    },
+    "//#env:check": {
+      "cache": false,
+      "outputs": []
     }
   }
 }

@@ -10,7 +10,11 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "allowedUnstableApis": ["effect/FileSystem", "effect/Path"]
+        "allowedUnstableApis": [
+          "effect/FileSystem",
+          "effect/Path",
+          "@effect/vitest"
+        ]
       }
     ]
   },

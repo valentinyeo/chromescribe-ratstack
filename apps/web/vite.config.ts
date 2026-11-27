@@ -1,11 +1,13 @@
 import { foldkit } from "@foldkit/vite-plugin";
 import { defineConfig } from "vite";
 
+import { backendPlugin } from "./backend-plugin.js";
 import { stylexPlugin } from "./stylex.js";
 
 export default defineConfig({
   plugins: [
     stylexPlugin(),
+    backendPlugin(),
     foldkit({
       ssr: {
         build: { prerender: true },

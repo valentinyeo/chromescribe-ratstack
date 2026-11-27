@@ -35,7 +35,20 @@ jobs:
         # 6882060, 4 cores/16 GB: median N1=479s, N2=265s, N4=271s; N2 worst test=39.13% of budget.
         env:
           LANDMINES_BASE: ${{ github.event.pull_request.base.sha }}
-        run: pnpm turbo run check test build --summarize --concurrency=2
+        run: pnpm turbo run check test build --summarize --concurrency=2 --continue=always
+      - name: Save safe repairs for failed checks
+        if: failure()
+        run: |
+          pnpm exec oxfmt .
+          pnpm exec ultracite fix || true
+          pnpm exec oxfmt .
+          git diff --binary > /tmp/formatting.patch
+      - name: Upload formatting repair
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatting-repair
+          path: /tmp/formatting.patch
       - name: Report built Worker and site sizes
         run: |
           measure() {

@@ -20,12 +20,11 @@ export default Alchemy.Stack(
     state: chromeScribeState(),
   },
   Effect.gen(function* stack() {
+    const worker = yield* ChromeScribeWorker;
     const website = yield* Website;
 
-    const worker = yield* ChromeScribeWorker;
-
     return {
-      workerUrl: worker.url,
+      workerName: worker.workerName,
       websiteUrl: website.url,
     };
   })

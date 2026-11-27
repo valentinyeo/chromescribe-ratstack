@@ -37,6 +37,7 @@ const unbounded = (reason: string): readonly ReadBoundary[] => [
 
 const parameterizedReadBoundaries = new Map(
   Object.entries<readonly ReadBoundary[]>({
+    "apps/web/test/backend-binding.test.ts": hashed("apps/web/dist/**"),
     "apps/web/test/production-bundle.test.ts": hashed("apps/web/dist/**"),
     "packages/core/src/file-inspector.ts": unbounded(
       "The file-inspection port accepts a caller-selected path"

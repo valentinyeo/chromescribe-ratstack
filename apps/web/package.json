@@ -16,12 +16,14 @@
     "@alchemy.run/cloudflare": "2.0.0-beta.87",
     "@chromescribe/capability": "workspace:*",
     "@chromescribe/core": "workspace:*",
+    "@chromescribe/worker": "workspace:*",
     "@stylexjs/stylex": "0.19.2",
     "alchemy": "2.0.0-beta.87",
     "effect": "4.1.4",
     "foldkit": "0.170.0"
   },
   "devDependencies": {
+    "@effect/vitest": "4.1.4",
     "@foldkit/vite-plugin": "0.29.0",
     "@stylexjs/unplugin": "0.19.2",
     "@types/node": "24.19.2",

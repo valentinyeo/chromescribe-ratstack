@@ -38,10 +38,8 @@ const decodeJsonRpcResponse = Schema.decodeUnknownSync(
 const decodeDevtoolsCall = Schema.decodeUnknownSync(
   Schema.Struct({
     structuredContent: Schema.Struct({
-      result: Schema.Struct({
-        entries: Schema.Array(CallEntrySchema),
-        matched: Schema.Int,
-      }),
+      entries: Schema.Array(CallEntrySchema),
+      matched: Schema.Int,
     }),
   })
 );
@@ -222,7 +220,7 @@ describe("built MCP server", () => {
     expect(call?.error).toBeUndefined();
 
     const { structuredContent } = decodeDevtoolsCall(call?.result);
-    const { entries, matched } = structuredContent.result;
+    const { entries, matched } = structuredContent;
     const [entry] = entries;
 
     expect(matched).toBe(1);

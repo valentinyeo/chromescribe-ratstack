@@ -2,11 +2,9 @@
 import { spawn, spawnSync } from "node:child_process";
 import path from "node:path";
 
-import { NodeServices } from "@effect/platform-node";
+import { CallEntrySchema, OutcomeSchema } from "@chromescribe/devtools";
 import { describe, expect, it } from "@effect/vitest";
-import { CallEntrySchema, OutcomeSchema } from "@rat-stack/devtools";
-import { Effect, FileSystem, Schema } from "effect";
-import * as McpSchema from "effect/ai/McpSchema";
+import { Schema } from "effect";
 
 const cliDir = path.resolve(import.meta.dirname, "..");
 
@@ -124,9 +122,8 @@ describe("built CLI", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("USAGE");
-    expect(result.stdout).not.toContain("registerInterest");
 
-    for (const name of ["stats", "catalog", "openapi", "serve", "mcp"]) {
+    for (const name of ["stats", "openapi", "serve", "mcp"]) {
       expect(result.stdout).toContain(name);
     }
   });
@@ -156,14 +153,6 @@ describe("built CLI", () => {
     );
   });
 
-  it("prints the catalog as TypeScript declarations", () => {
-    const result = runCli(["catalog", "--types"]);
-
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain("declare const tools: {");
-    expect(result.stdout).toContain("readonly inspectFile: (input:");
-  });
-
   it("prints an OpenAPI document with one path per capability", () => {
     const result = runCli(["openapi"]);
 
@@ -188,89 +177,9 @@ const initialize = [
 ] as const;
 
 describe("built MCP server", () => {
-  it.effect(
-    "lists and reads portable skills from the workspace MCP server",
-    () =>
-      Effect.gen(function* testSkillsOverStdio() {
-        const uri = "skill://rat-stack/security-audit/SKILL.md";
-
-        const responses = yield* Effect.promise(() =>
-          mcpConversation([
-            ...initialize,
-            { id: 2, jsonrpc: "2.0", method: "skills/list", params: {} },
-            { id: 3, jsonrpc: "2.0", method: "skills/get", params: { uri } },
-            {
-              id: 4,
-              jsonrpc: "2.0",
-              method: "resources/read",
-              params: { uri },
-            },
-          ])
-        );
-
-        const { skills } = yield* Schema.decodeUnknownEffect(
-          Schema.Struct({ skills: Schema.Array(McpSchema.Skill) })
-        )(responses.find(({ id }) => id === 2)?.result);
-
-        expect(skills).toHaveLength(23);
-
-        const { skill } = yield* Schema.decodeUnknownEffect(
-          Schema.Struct({ skill: McpSchema.Skill })
-        )(responses.find(({ id }) => id === 3)?.result);
-
-        expect(skill).toEqual(skills.find((entry) => entry.uri === uri));
-
-        const fs = yield* FileSystem.FileSystem;
-
-        const original = yield* fs.readFileString(
-          path.join(repoRoot, "skills/security-audit/SKILL.md")
-        );
-
-        expect(responses.find(({ id }) => id === 4)?.result).toEqual({
-          contents: [{ mimeType: "text/markdown", text: original, uri }],
-        });
-      }).pipe(Effect.provide(NodeServices.layer))
-  );
-
-  it("runs a program against the capabilities in code mode", async () => {
-    const responses = await mcpConversation(
-      [
-        ...initialize,
-        {
-          id: 2,
-          jsonrpc: "2.0",
-          method: "tools/call",
-          params: {
-            arguments: {
-              code: `const stats = await tools.inspectFile({ path: ${JSON.stringify(readmePath)} }); return stats.lines > 10;`,
-            },
-            name: "execute",
-          },
-        },
-      ],
-      ["--code-mode"]
-    );
-
-    const call = responses.find((response) => response.id === 2);
-    expect(call?.error).toBeUndefined();
-    expect(call?.result).toMatchObject({
-      structuredContent: { logs: [], result: true },
-    });
-  });
-
   it("lists the capabilities as tools over stdio", async () => {
     const responses = await mcpConversation([
-      {
-        id: 1,
-        jsonrpc: "2.0",
-        method: "initialize",
-        params: {
-          capabilities: {},
-          clientInfo: { name: "e2e", version: "0.0.0" },
-          protocolVersion: "2025-06-18",
-        },
-      },
-      { jsonrpc: "2.0", method: "notifications/initialized" },
+      ...initialize,
       { id: 2, jsonrpc: "2.0", method: "tools/list", params: {} },
     ]);
 
@@ -295,17 +204,21 @@ describe("built MCP server", () => {
           jsonrpc: "2.0",
           method: "tools/call",
           params: {
-            arguments: {
-              code: `await tools.inspectFile({ path: ${JSON.stringify(readmePath)} }); return await tools.rat_list_calls({});`,
-            },
-            name: "execute",
+            arguments: { path: readmePath },
+            name: "inspectFile",
           },
         },
+        {
+          id: 3,
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: { arguments: {}, name: "rat_list_calls" },
+        },
       ],
-      ["--devtools", "--code-mode"]
+      ["--devtools"]
     );
 
-    const call = responses.find((response) => response.id === 2);
+    const call = responses.find((response) => response.id === 3);
     expect(call?.error).toBeUndefined();
 
     const { structuredContent } = decodeDevtoolsCall(call?.result);

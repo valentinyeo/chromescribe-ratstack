@@ -1,5 +1,5 @@
-import type { Approval } from "@rat-stack/capability/approval";
-import type { Verdict } from "@rat-stack/check-harness";
+import type { Approval } from "@chromescribe/capability/approval";
+import type { Verdict } from "@chromescribe/check-harness";
 import type { Effect } from "effect";
 import { Context } from "effect";
 
@@ -35,4 +35,4 @@ export class DeployRunner extends Context.Service<
       receipt: WatchReceipt
     ) => Effect.Effect<string, DeployStepError>;
   }
->()("@rat-stack/deploy/DeployRunner") {}
+>()("@chromescribe/deploy/DeployRunner") {}

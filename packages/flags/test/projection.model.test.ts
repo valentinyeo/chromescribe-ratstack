@@ -1,14 +1,14 @@
-import { expect, it } from "@effect/vitest";
 import {
   FlagLedger,
   FlagPosition,
   FlagTarget,
-} from "@rat-stack/core/flag-control";
+} from "@chromescribe/core/flag-control";
 import {
   FlagStateStore,
   flagLedgerEngine,
-} from "@rat-stack/core/flag-ledger-engine";
-import { Flags, FlagStorageError } from "@rat-stack/core/flags";
+} from "@chromescribe/core/flag-ledger-engine";
+import { Flags, FlagStorageError } from "@chromescribe/core/flags";
+import { expect, it } from "@effect/vitest";
 import { Clock, Effect, Exit, Layer, Option, Ref, Schema } from "effect";
 import * as Arbitrary from "effect/Arbitrary";
 

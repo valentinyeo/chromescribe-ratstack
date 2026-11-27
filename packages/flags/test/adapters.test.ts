@@ -1,13 +1,11 @@
-import { NodeCrypto } from "@effect/platform-node";
-import { expect, it } from "@effect/vitest";
-import { Approval } from "@rat-stack/capability/approval";
-import { getFlag, listFlags } from "@rat-stack/core/flag-capabilities";
-import { FlagTarget } from "@rat-stack/core/flag-control";
+import { Approval } from "@chromescribe/capability/approval";
+import { getFlag, listFlags } from "@chromescribe/core/flag-capabilities";
+import { FlagTarget } from "@chromescribe/core/flag-control";
 import {
   flipFeatureFlag,
   recordFlagEvidence,
   readFlagLedger,
-} from "@rat-stack/core/flag-write-capabilities";
+} from "@chromescribe/core/flag-write-capabilities";
 import {
   FlagScopeMismatch,
   Flags,
@@ -15,7 +13,9 @@ import {
   eventsEnabled,
   eventsIdentityMode,
   defineFlag,
-} from "@rat-stack/core/flags";
+} from "@chromescribe/core/flags";
+import { NodeCrypto } from "@effect/platform-node";
+import { expect, it } from "@effect/vitest";
 import {
   Config,
   ConfigProvider,

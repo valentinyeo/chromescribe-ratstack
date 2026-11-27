@@ -3,18 +3,18 @@ import {
   FlagJournal,
   FlagLedger as LedgerPort,
   FlagPosition,
-} from "@rat-stack/core/flag-control";
+} from "@chromescribe/core/flag-control";
 import {
   FlagStateStore,
   flagLedgerEngine,
-} from "@rat-stack/core/flag-ledger-engine";
+} from "@chromescribe/core/flag-ledger-engine";
 import {
   Flags,
   FlagStorageError,
   eventFlags,
   eventsEnabled,
-} from "@rat-stack/core/flags";
-import type { Flag } from "@rat-stack/core/flags";
+} from "@chromescribe/core/flags";
+import type { Flag } from "@chromescribe/core/flags";
 import type * as RuntimeContext from "alchemy/RuntimeContext";
 import { Clock, Effect, Layer, Schema, Semaphore } from "effect";
 

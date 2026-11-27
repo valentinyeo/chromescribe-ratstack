@@ -2,14 +2,14 @@ import {
   FlagJournal,
   flagPartition,
   validateFlagScope,
-} from "@rat-stack/core/flag-control";
-import type { FlagPosition } from "@rat-stack/core/flag-control";
+} from "@chromescribe/core/flag-control";
+import type { FlagPosition } from "@chromescribe/core/flag-control";
 import {
   FlagStateStore,
   flagLedgerEngine,
-} from "@rat-stack/core/flag-ledger-engine";
-import { Flags, decodeFlag, InvalidFlagValue } from "@rat-stack/core/flags";
-import type { Flag } from "@rat-stack/core/flags";
+} from "@chromescribe/core/flag-ledger-engine";
+import { Flags, decodeFlag, InvalidFlagValue } from "@chromescribe/core/flags";
+import type { Flag } from "@chromescribe/core/flags";
 import { Effect, Layer, Option, Ref, Schema } from "effect";
 
 import { evaluateFlag, FlagRule } from "./evaluate.js";

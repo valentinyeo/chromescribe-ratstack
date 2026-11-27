@@ -49,7 +49,7 @@ export class ReceiptStore extends Context.Service<
       receipt: WatchReceipt
     ) => Effect.Effect<string, DeployStepError>;
   }
->()("@rat-stack/deploy/ReceiptStore") {
+>()("@chromescribe/deploy/ReceiptStore") {
   static layer = (directory = "../../.rat/deploy") =>
     Layer.effect(
       ReceiptStore,

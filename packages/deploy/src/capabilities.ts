@@ -1,6 +1,6 @@
-import { Approval } from "@rat-stack/capability/approval";
-import { defineContract } from "@rat-stack/capability/contract";
-import { implement } from "@rat-stack/capability/implement";
+import { Approval } from "@chromescribe/capability/approval";
+import { defineContract } from "@chromescribe/capability/contract";
+import { implement } from "@chromescribe/capability/implement";
 import { Effect, Option, Runtime, Schema } from "effect";
 
 import { DeployReportSchema, deployReport } from "./contracts.js";

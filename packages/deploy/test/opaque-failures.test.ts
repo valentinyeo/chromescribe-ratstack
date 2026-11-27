@@ -2,25 +2,15 @@ import { describe, expect, it } from "@effect/vitest";
 import { NonInteractiveTerminal } from "alchemy/Interaction";
 import { SchemaAST } from "effect";
 
-import { Unauthenticated } from "../../auth/src/unauthenticated.js";
 import { ApprovalDenied } from "../../capability/src/approval-denied.js";
-import { IntakeApplicationsUnavailable } from "../../core/src/intake-applications-unavailable.js";
-import { IntakeEventsUnavailable } from "../../core/src/intake-events-unavailable.js";
-import { InvalidInterestToken } from "../../core/src/invalid-interest-token.js";
-import { JoinContactUnreadable } from "../../core/src/join-contact-unreadable.js";
-import { JoinRetentionBackfillUnavailable } from "../../core/src/join-retention-unavailable.js";
-import { InvalidCrashTrace } from "../../crash/src/invalid-crash-trace.js";
+import { FlagAtomicityRequired } from "../../core/src/flag-atomicity-required.js";
+import { UnknownFlag } from "../../core/src/unknown-flag.js";
 import { DeployStepError } from "../src/contracts.js";
 import { RollbackFailed } from "../src/rollback-failed.js";
 
 const opaqueFailures = [
-  ["IntakeApplicationsUnavailable", IntakeApplicationsUnavailable],
-  ["IntakeEventsUnavailable", IntakeEventsUnavailable],
-  ["InvalidCrashTrace", InvalidCrashTrace],
-  ["InvalidInterestToken", InvalidInterestToken],
-  ["JoinContactUnreadable", JoinContactUnreadable],
-  ["JoinRetentionBackfillUnavailable", JoinRetentionBackfillUnavailable],
-  ["Unauthenticated", Unauthenticated],
+  ["FlagAtomicityRequired", FlagAtomicityRequired],
+  ["UnknownFlag", UnknownFlag],
   ["DeployStepError", DeployStepError],
   ["RollbackFailed", RollbackFailed],
   ["ApprovalDenied", ApprovalDenied],

@@ -31,37 +31,37 @@ Node `24.18.0` and pnpm `11.3.0` are the supported versions. `packageManager` pi
 ## Workspace layout
 
 - **`apps/cli`**:
-  - Package: `@rat-stack/cli`
+  - Package: `@chromescribe/cli`
   - Role: Composition root: `stats`, `openapi`, `serve`, `mcp`
 - **`packages/capability`**:
-  - Package: `@rat-stack/capability`
+  - Package: `@chromescribe/capability`
   - Role: `defineContract`, `implement`, and the `toCommand`, `toHttpApi`, `toToolkit`, `toRpc`, and `toCodeMode` projections
 - **`packages/core`**:
-  - Package: `@rat-stack/core`
+  - Package: `@chromescribe/core`
   - Role: Domain example: the `inspectFile` contract, handler, and lifecycle machine
 - **`packages/flags`**:
-  - Package: `@rat-stack/flags`
+  - Package: `@chromescribe/flags`
   - Role: Typed flags, Config, memory and KV adapters, stable rollouts, audited writes, and removal dates
 - **`packages/events`**:
-  - Package: `@rat-stack/events`
+  - Package: `@chromescribe/events`
   - Role: Request analytics: capture, visitor privacy rules, and Basin resources behind core's `EventSink` port
 - **`packages/crash`**:
-  - Package: `@rat-stack/crash`
+  - Package: `@chromescribe/crash`
   - Role: Private crash-trace archive for the Mischief Worker
 - **`packages/motion`**:
-  - Package: `@rat-stack/motion`
+  - Package: `@chromescribe/motion`
   - Role: Easing, tweens, springs and interpolation as dependency-free TypeScript, with an optional Foldkit adapter
 - **`packages/lore`**:
-  - Package: `@rat-stack/lore`
+  - Package: `@chromescribe/lore`
   - Role: Public content graph and traversal service
 - **`packages/subscriber-delivery`**:
-  - Package: `@rat-stack/subscriber-delivery`
+  - Package: `@chromescribe/subscriber-delivery`
   - Role: External subscriber intake and confirmation adapter behind core's job-shaped ports
 - **`apps/infra`**:
-  - Package: `@rat-stack/infra`
+  - Package: `@chromescribe/infra`
   - Role: Alchemy Stack (Cloudflare by default)
 - **`apps/site`**:
-  - Package: `@rat-stack/site`
+  - Package: `@chromescribe/site`
   - Role: Cloudflare Worker for the public site, agent discovery, and sandboxed execute
 - **`.agent_sources/`**:
   - Package: —
@@ -176,16 +176,16 @@ A repository created from the template starts with one squashed commit, so the t
 Rename the workspace package names before you build on the example. These are examples, not the full package inventory:
 
 - `package.json`: `rat-stack`
-- `apps/cli/package.json`: `@rat-stack/cli`
-- `apps/infra/package.json`: `@rat-stack/infra`
-- `apps/site/package.json`: `@rat-stack/site`
-- `packages/capability/package.json`: `@rat-stack/capability`
-- `packages/core/package.json`: `@rat-stack/core`
+- `apps/cli/package.json`: `@chromescribe/cli`
+- `apps/infra/package.json`: `@chromescribe/infra`
+- `apps/site/package.json`: `@chromescribe/site`
+- `packages/capability/package.json`: `@chromescribe/capability`
+- `packages/core/package.json`: `@chromescribe/core`
 
-Rename the `bin` entry in `apps/cli/package.json`, the root command in `apps/cli/src/command.ts`, and the version in `apps/cli/src/version.ts`. Then change every matching import and workspace manifest reference. Find the current `@rat-stack/` names with:
+Rename the `bin` entry in `apps/cli/package.json`, the root command in `apps/cli/src/command.ts`, and the version in `apps/cli/src/version.ts`. Then change every matching import and workspace manifest reference. Find the current `@chromescribe/` names with:
 
 ```sh
-rg -n '@rat-stack/' --glob '*.json' --glob '*.ts' -l
+rg -n '@chromescribe/' --glob '*.json' --glob '*.ts' -l
 ```
 
 A new scope changes line lengths, so run the formatter once after the rename:
@@ -233,17 +233,17 @@ Choose a feature cut below. Combined package names mean the dependent features g
   - Keep: Core's `Flags` port and declarations
   - Delete: Replace `apps/site/src/flags.ts` with core imports and `export const flagsLayer = Flags.defaults(eventFlags); export const liveFlagsLayer = flagsLayer;`; remove `packages/flags` and its dependency in `apps/site/package.json`. Readers use defaults; the CLI writer fails with a named read-only error
 - **No analytics**:
-  - Delete: `packages/events`; the `@rat-stack/events` line in `apps/site/package.json`
-  - Change: the one line in `apps/site/src/events.ts` becomes `export { events, memoryEvents } from "@rat-stack/core/events-off";`
+  - Delete: `packages/events`; the `@chromescribe/events` line in `apps/site/package.json`
+  - Change: the one line in `apps/site/src/events.ts` becomes `export { events, memoryEvents } from "@chromescribe/core/events-off";`
   - Then: `pnpm install`, `pnpm git-snapshot`, and the gate
   - Optional: `EVENTS_ENABLED`, `EVENTS_SINK_TOKEN`, and `EVENTS_IDENTITY_MODE` in `apps/site/.env.schema` and `apps/site/src/config-fingerprint.ts`, and the events flags in `packages/core/src/flags.ts`. The Worker ignores them once capture is off. Details: `packages/events/README.md`
 - **No account auth or database (`auth` and `database`, with protected feedback and browser dev identity)**:
-  - Delete: `packages/auth` and `packages/database`; their dependencies in `apps/site/package.json`, and `@rat-stack/auth` in `apps/web/package.json`; `apps/site/src/auth/{binding-client,foundation,infrastructure,private-capabilities,private-tag,private-worker}.ts` and `apps/site/test/feedback-auth.test.ts`
+  - Delete: `packages/auth` and `packages/database`; their dependencies in `apps/site/package.json`, and `@chromescribe/auth` in `apps/web/package.json`; `apps/site/src/auth/{binding-client,foundation,infrastructure,private-capabilities,private-tag,private-worker}.ts` and `apps/site/test/feedback-auth.test.ts`
   - Delete: `apps/web/src/dev/{client,features,devtools}`, `apps/web/test/overlay.test.ts`, and `apps/web/test/overlay.scene.test.ts`; the recording case in `apps/web/test/dev-server.test.ts` and the development-build case in `apps/web/test/production-bundle.test.ts`. Keep its production no-leak check
   - Change: in `apps/site/src/worker.ts`, remove the `feedbackInfrastructure` import and call, and pass `undefined` in the feedback argument to `makeMischief`. Keep the unavailable feedback port in `auth/feedback-access.ts`; it cannot write feedback
   - Change: remove the `privateAuth` import and `AUTH_ENABLED` provider wrapper from `apps/infra/alchemy.run.ts`; remove `LearnFeedbackAuth` from the entry list in `apps/site/scripts/startup-report.ts`, and remove its `feedbackAuthBuild` import
-  - Change: replace `devtoolsRoutes` with `contentRoutes` from `./content-routes.js` in `apps/web/src/dev/backend.ts`; point the `development` condition of `#devtools-overlay` at `./src/client/no-devtools.ts`; remove `@rat-stack/devtools` from `apps/web/package.json`
-  - Change: in `packages/core/test/boundaries-rule.test.ts`, remove the auth-only `testPeople` fixture; replace `authDistribution` with a `devtools` import from `@rat-stack/devtools/dist/index.js`, and `authBarrel` with a `packages/core/src` re-export from `@rat-stack/devtools`. Keep their refusal assertions. Remove auth test people from the allowed dev fixture
+  - Change: replace `devtoolsRoutes` with `contentRoutes` from `./content-routes.js` in `apps/web/src/dev/backend.ts`; point the `development` condition of `#devtools-overlay` at `./src/client/no-devtools.ts`; remove `@chromescribe/devtools` from `apps/web/package.json`
+  - Change: in `packages/core/test/boundaries-rule.test.ts`, remove the auth-only `testPeople` fixture; replace `authDistribution` with a `devtools` import from `@chromescribe/devtools/dist/index.js`, and `authBarrel` with a `packages/core/src` re-export from `@chromescribe/devtools`. Keep their refusal assertions. Remove auth test people from the allowed dev fixture
   - Change: in `apps/infra/test/provider-coverage.test.ts`, keep both events modes and every provider-registration assertion; remove the auth-mode loop and the assertions requiring `Drizzle.Schema` and `BetterAuth.Migrate`. Remove the two database excerpt fences from `.brain/resources/lore/scopes-own-resources.svx` and refer to its linked source instead
   - Then: `pnpm install`, `pnpm git-snapshot`, and `pnpm turbo run check test build`
   - Keep: the unused `AUTH_ENABLED` schema/fingerprint input can stay. `WEB_BOT_AUTH_ENABLED` and `WEB_BOT_AUTH_PRIVATE_JWK` protect a different interface; do not remove them with account auth. Never replace protected feedback with an unauthenticated writer
@@ -252,7 +252,7 @@ Choose a feature cut below. Combined package names mean the dependent features g
   - Change: in `apps/cli/src/surfaces.ts`, remove `DEVTOOLS_MCP_PATH`, `withDevtools`, `toolkitServer`, `devtoolsRoutes`, `devtoolsWebServer`, and `mcpServer.{devtools,devtoolsCodeMode}`; remove their `AnyCapability`, `Effect`, and recorder imports. In `apps/cli/src/command.ts`, remove `devtoolsFlag`, both `devtools` options and handler branches, the devtools URL log, and the `SERVE_HOST`/`DEVTOOLS_MCP_PATH`/`devtoolsWebServer` imports. `serve` becomes `({ port }) => Layer.launch(webServer(port))`; MCP still selects `mcpServer.codeMode` or `mcpServer.tools` through an expression arrow
   - Change: replace `devtoolsRoutes` with `contentRoutes` from `./content-routes.js` in `apps/web/src/dev/backend.ts`; point the `development` condition of `#devtools-overlay` at `./src/client/no-devtools.ts`
   - Change: remove only the recorder cases in `apps/cli/test/{serve,cli.e2e}.test.ts` and `apps/web/test/dev-server.test.ts`, and the development-build positive control in `apps/web/test/production-bundle.test.ts`. Remove the unused recorder and `devtoolsRoutes` imports and the `decodeDevtoolsCall` decoder; keep ordinary REST, MCP, RPC, and production no-leak checks
-  - Change: in `packages/core/test/boundaries-rule.test.ts`, replace removed recorder fixtures with retained `@rat-stack/auth/devtools` test-person fixtures (`ratTestPerson as devtools`, and `typeof import("@rat-stack/auth/devtools").runAsPerson` for the type import). Drop the recorder from the allowed dev wiring fixture. Use `inspectFileContract` from `@rat-stack/core/contracts` for the browser-safe fixture and `inspectFile` from `@rat-stack/core` for the rejected browser-handler fixture. Keep every boundary assertion
+  - Change: in `packages/core/test/boundaries-rule.test.ts`, replace removed recorder fixtures with retained `@chromescribe/auth/devtools` test-person fixtures (`ratTestPerson as devtools`, and `typeof import("@chromescribe/auth/devtools").runAsPerson` for the type import). Drop the recorder from the allowed dev wiring fixture. Use `inspectFileContract` from `@chromescribe/core/contracts` for the browser-safe fixture and `inspectFile` from `@chromescribe/core` for the rejected browser-handler fixture. Keep every boundary assertion
   - Then: `pnpm install`, `pnpm git-snapshot`, and `pnpm turbo run check test build`
   - Optional: keep auth's unmounted test-person helpers and capability's no-op observer ports. Removing the recorder does not require deleting the ports used by handlers and machines
 - **No live signup (`subscriber-delivery` and `intake-live`)**:
@@ -289,7 +289,7 @@ Choose a feature cut below. Combined package names mean the dependent features g
 - **No cloud stack (`infra`, after the deployment-driver cut)**:
   - Delete: `apps/infra`; the root `package.json` scripts `alchemy`, `infra:deploy`, `infra:destroy`, `infra:dev`, and `infra:plan`; the `apps/infra/alchemy.run.ts` excerpt fences in `skills/learn-rat-stack/SKILL.md` and `skills/learn-alchemy/SKILL.md`
   - Change: replace `apps/infra/package.json` with `apps/site/package.json` in `apps/site/scripts/generate-content.ts`, `apps/site/scripts/migration-inputs.ts`, `apps/site/test/component-registry.test.ts`, and the `ALCHEMY_VERSION` read in `scripts/vendor-agent-sources.sh`. The site already pins the same Alchemy version. Change that script's source-pin explanation from `apps/infra` to `apps/site`
-  - Change: in `packages/core/test/boundaries-rule.test.ts`, replace the `@rat-stack/infra` browser-import fixture with `../../../../infra/alchemy.run.ts`. Keep its rejection assertion; the deleted package alias no longer resolves, but the reserved infra-path boundary still applies
+  - Change: in `packages/core/test/boundaries-rule.test.ts`, replace the `@chromescribe/infra` browser-import fixture with `../../../../infra/alchemy.run.ts`. Keep its rejection assertion; the deleted package alias no longer resolves, but the reserved infra-path boundary still applies
   - Then: `pnpm install`, `pnpm git-snapshot`, and `pnpm turbo run check test build`; `bash -n scripts/vendor-agent-sources.sh` checks the adapted source-fetch script. This combined cut removes `infra`, `deploy`, and `check-harness`; it leaves the Worker declarations and content build available without a deployment Stack
 - **No CLI (keep browser devtools and hosted interfaces)**:
   - Delete: `apps/cli`, `.github/workflows/ratstack-publish.yml`, and the root `package.json` script `cli`. This also removes the published `ratstack` bin

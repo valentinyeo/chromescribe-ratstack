@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "allowedUnstableApis": [
+          "@effect/platform-node/NodeRuntime",
+          "@effect/platform-node/NodeServices",
+          "@effect/vitest",
+          "effect/http/HttpRouter",
+          "effect/http/HttpServer",
+          "effect/http/HttpServerRequest",
+          "effect/http/HttpServerResponse",
+          "effect/http-api/HttpApiBuilder",
+          "effect/http-api/HttpApiScalar"
+        ]
+      }
+    ]
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"]
+}

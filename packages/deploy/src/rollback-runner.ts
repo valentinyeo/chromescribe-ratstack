@@ -1,4 +1,4 @@
-import { gateOutcome } from "@rat-stack/check-harness";
+import { gateOutcome } from "@chromescribe/check-harness";
 import { Clock, Context, Effect, Layer, Option, Result } from "effect";
 
 import { measuredCheck, postDeployChecks } from "./checks.js";
@@ -28,7 +28,7 @@ export class RollbackRunner extends Context.Service<
       receipt: RollbackReceipt
     ) => Effect.Effect<RollbackReceipt, RollbackFailed>;
   }
->()("@rat-stack/deploy/RollbackRunner") {
+>()("@chromescribe/deploy/RollbackRunner") {
   static layer = (baseUrl: string) =>
     Layer.effect(
       RollbackRunner,

@@ -1,6 +1,6 @@
-import { flagControlDefaults } from "@rat-stack/core/flag-control";
-import { Flags, decodeFlag, validateFlagScope } from "@rat-stack/core/flags";
-import type { Flag } from "@rat-stack/core/flags";
+import { flagControlDefaults } from "@chromescribe/core/flag-control";
+import { Flags, decodeFlag, validateFlagScope } from "@chromescribe/core/flags";
+import type { Flag } from "@chromescribe/core/flags";
 import { Config, Effect, Layer, Schema } from "effect";
 
 export const configFlagsLayer = (registry: readonly Flag<unknown>[]) =>

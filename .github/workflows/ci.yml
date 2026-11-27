@@ -16,11 +16,7 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     env:
-      TURBO_API: ${{ vars.TURBO_API }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
-      TURBO_CACHE: local:rw,remote:rw
+      TURBO_CACHE: local:rw
       TURBO_RUN_SUMMARY: "true"
     steps:
       - name: Check out repository
@@ -35,13 +31,29 @@ jobs:
         run: corepack enable && corepack prepare pnpm@11.3.0 --activate
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Fetch pinned source objects
-        run: pnpm sources:fetch
       - name: Check and test
         # 6882060, 4 cores/16 GB: median N1=479s, N2=265s, N4=271s; N2 worst test=39.13% of budget.
         env:
           LANDMINES_BASE: ${{ github.event.pull_request.base.sha }}
-        run: pnpm turbo run check test build --concurrency=2
+        run: pnpm turbo run check test build --summarize --concurrency=2
+      - name: Report built Worker and site sizes
+        run: |
+          measure() {
+            if [ ! -d "$1" ]; then
+              echo "::warning::$1 missing after build"
+              return 0
+            fi
+            total=$(find "$1" -type f -printf '%s\n' | awk '{sum += $1} END {print sum + 0}')
+            printf '### %s: %s bytes (%.1f KiB), %s files\n' \
+              "$1" "$total" "$(awk -v b="$total" 'BEGIN {print b / 1024}')" \
+              "$(find "$1" -type f | wc -l)" | tee -a "$GITHUB_STEP_SUMMARY"
+            find "$1" -type f -printf '%12s  %p\n' | sort -rn | head -20 | tee -a "$GITHUB_STEP_SUMMARY"
+          }
+          measure apps/worker/dist
+          measure apps/web/dist
+      - name: Report Worker esbuild bundle size
+        continue-on-error: true
+        run: pnpm --filter @chromescribe/worker run bundle
       - name: Report Turbo cache story
         if: always()
         continue-on-error: true

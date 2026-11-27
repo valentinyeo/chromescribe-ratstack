@@ -1,4 +1,4 @@
-import { VerdictSchema } from "@rat-stack/check-harness";
+import { VerdictSchema } from "@chromescribe/check-harness";
 import { Schema } from "effect";
 
 import { PlanRowsSchema, PlanRowSchema } from "./plan.js";

@@ -1,6 +1,6 @@
+import { Approval } from "@chromescribe/capability/approval";
+import { gateOutcome } from "@chromescribe/check-harness";
 import { expect, it } from "@effect/vitest";
-import { Approval } from "@rat-stack/capability/approval";
-import { gateOutcome } from "@rat-stack/check-harness";
 import { createEffectActor, join } from "@xstate/effect";
 import { Clock, Effect, Fiber, Layer, Option, Schema } from "effect";
 import { TestClock } from "effect/testing";

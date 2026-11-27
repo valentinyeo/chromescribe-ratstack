@@ -1,48 +1,30 @@
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- The Node HTTP server is the one place where nothing in Effect wraps the built-in: `NodeHttpServer.layer` takes a `node:http` server factory.
 import { createServer } from "node:http";
 
+import type { AnyCapability } from "@chromescribe/capability";
+import { toCommand, toHttpApi, toToolkit } from "@chromescribe/capability";
+import { capabilities as coreCapabilities } from "@chromescribe/core";
+import { flagWriteCapabilities } from "@chromescribe/core/flag-write-capabilities";
+import { devtools, devtoolsLayer } from "@chromescribe/devtools";
 import { NodeHttpServer } from "@effect/platform-node";
-import type { AnyCapability } from "@rat-stack/capability";
-import {
-  layerSubprocess,
-  toCodeMode,
-  toHttpApi,
-  toToolkit,
-} from "@rat-stack/capability";
-import { capabilities as coreCapabilities } from "@rat-stack/core";
-import { flagWriteCapabilities } from "@rat-stack/core/flag-write-capabilities";
-import { devtools, devtoolsLayer } from "@rat-stack/devtools";
-import { learnCapabilities } from "@rat-stack/learn";
-import { localLearnCapabilities } from "@rat-stack/learn/local";
 import { Effect, Layer, Logger } from "effect";
 import { McpServer } from "effect/ai";
 import { HttpRouter } from "effect/http";
 import { HttpApiBuilder, HttpApiScalar } from "effect/http-api";
 
 import { mcpProtocols } from "./mcp-protocols.js";
-import { mcpSkills } from "./mcp-skills.js";
 import { VERSION } from "./version.js";
 
-export const capabilities = [
-  ...coreCapabilities,
-  ...learnCapabilities,
-] as const;
-
-export const cliCapabilities = [
-  ...coreCapabilities,
-  ...localLearnCapabilities,
-] as const;
+export const capabilities = [...coreCapabilities] as const;
 
 export const commandCapabilities = [
-  ...cliCapabilities,
+  ...coreCapabilities,
   ...flagWriteCapabilities,
 ] as const;
 
-export const http = toHttpApi("RatStack", capabilities);
+export const http = toHttpApi("ChromeScribe", capabilities);
 
-export const tools = toToolkit(cliCapabilities);
-
-export const codeMode = toCodeMode(cliCapabilities);
+export const tools = toToolkit(capabilities);
 
 export const routes = Layer.merge(
   HttpApiBuilder.layer(http.api, { openapiPath: "/openapi.json" }).pipe(
@@ -60,9 +42,8 @@ export const webServer = (port: number) =>
   HttpRouter.serve(routes).pipe(Layer.provide(serverLayer(port)));
 
 const stdio = McpServer.layerStdio({
-  name: "rat-stack",
+  name: "chromescribe",
   protocols: mcpProtocols,
-  registrations: mcpSkills,
   version: VERSION,
 });
 
@@ -72,7 +53,7 @@ const withStdio = <A, E, R>(server: Layer.Layer<A, E, R>) =>
     Layer.provide(Layer.succeed(Logger.LogToStderr, true))
   );
 
-export const DEVTOOLS_MCP_PATH = "/__rat/mcp";
+export const DEVTOOLS_MCP_PATH = "/__chromescribe/mcp";
 
 const withDevtools = <const Caps extends readonly AnyCapability[], A, E, R>(
   caps: Caps,
@@ -94,7 +75,7 @@ const toolkitServer = <const Caps extends readonly AnyCapability[]>(
 export const devtoolsRoutes = withDevtools(
   capabilities,
   ({ capabilities: all, recorded }) => {
-    const api = toHttpApi("RatStack", recorded);
+    const api = toHttpApi("ChromeScribe", recorded);
 
     return Layer.mergeAll(
       HttpApiBuilder.layer(api.api, { openapiPath: "/openapi.json" }).pipe(
@@ -104,7 +85,7 @@ export const devtoolsRoutes = withDevtools(
       toolkitServer(all).pipe(
         Layer.provide(
           McpServer.layerHttp({
-            name: "rat-stack-devtools",
+            name: "chromescribe-devtools",
             path: DEVTOOLS_MCP_PATH,
             protocols: mcpProtocols,
             version: VERSION,
@@ -122,26 +103,12 @@ export const devtoolsWebServer = (port: number) =>
   );
 
 export const mcpServer = {
-  codeMode: withStdio(
-    McpServer.toolkit(codeMode.toolkit).pipe(
-      Layer.provideMerge(codeMode.layer),
-      Layer.provide(layerSubprocess())
-    )
-  ),
   devtools: withStdio(
-    withDevtools(cliCapabilities, ({ capabilities: all }) => toolkitServer(all))
-  ).pipe(Layer.provide(devtoolsLayer())),
-  devtoolsCodeMode: withStdio(
-    withDevtools(cliCapabilities, ({ capabilities: all }) => {
-      const projected = toCodeMode(all);
-
-      return McpServer.toolkit(projected.toolkit).pipe(
-        Layer.provideMerge(projected.layer),
-        Layer.provide(layerSubprocess())
-      );
-    })
+    withDevtools(capabilities, ({ capabilities: all }) => toolkitServer(all))
   ).pipe(Layer.provide(devtoolsLayer())),
   tools: withStdio(
     McpServer.toolkit(tools.toolkit).pipe(Layer.provideMerge(tools.layer))
   ),
 } as const;
+
+export const commandFor = toCommand;

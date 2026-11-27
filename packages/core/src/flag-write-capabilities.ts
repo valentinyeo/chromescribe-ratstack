@@ -1,5 +1,5 @@
-import { Approval } from "@rat-stack/capability/approval";
-import { aroundHandlers, implement } from "@rat-stack/capability/implement";
+import { Approval } from "@chromescribe/capability/approval";
+import { aroundHandlers, implement } from "@chromescribe/capability/implement";
 import { Effect, Predicate } from "effect";
 
 import { auditFlagRun } from "./flag-audit.js";

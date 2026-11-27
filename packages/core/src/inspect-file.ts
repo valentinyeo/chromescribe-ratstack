@@ -1,27 +1,14 @@
-import { implement } from "@rat-stack/capability/implement";
+import { implement } from "@chromescribe/capability/implement";
 
-import {
-  listCafeNews,
-  listCafeProjects,
-  peopleCapabilities,
-} from "./cafe-directory.js";
 import { inspectFileContract } from "./contracts.js";
 import { flagCapabilities } from "./flag-capabilities.js";
+import { healthFor } from "./health.js";
 import { runInspectMachine } from "./inspect-machine.js";
-import { joinInterest } from "./join-interest.js";
-import { getPrompt, listPrompts } from "./prompts.js";
 
 export const inspectFile = implement(inspectFileContract, ({ path }) =>
   runInspectMachine(path)
 );
 
-export const capabilities = [
-  inspectFile,
-  ...flagCapabilities,
-  joinInterest,
-  listPrompts,
-  getPrompt,
-  listCafeNews,
-  listCafeProjects,
-  ...peopleCapabilities,
-] as const;
+export const health = healthFor("node");
+
+export const capabilities = [inspectFile, health, ...flagCapabilities] as const;

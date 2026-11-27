@@ -1,8 +1,8 @@
-import { ExecuteError } from "@rat-stack/capability";
-import { toRpcGroup } from "@rat-stack/capability/rpc-group";
-import { gateOutcome, runCheck } from "@rat-stack/check-harness";
-import type { Verdict } from "@rat-stack/check-harness";
-import { searchContract } from "@rat-stack/core/contracts";
+import { ExecuteError } from "@chromescribe/capability";
+import { toRpcGroup } from "@chromescribe/capability/rpc-group";
+import { gateOutcome, runCheck } from "@chromescribe/check-harness";
+import type { Verdict } from "@chromescribe/check-harness";
+import { healthContract } from "@chromescribe/core/contracts";
 import { Clock, Config, DateTime, Effect, Layer, Option, Schema } from "effect";
 import * as HttpClient from "effect/http/HttpClient";
 import * as HttpClientRequest from "effect/http/HttpClientRequest";
@@ -58,7 +58,7 @@ const RateDocument = Schema.Struct({
   }),
 });
 
-const { group: readerSearchGroup } = toRpcGroup([searchContract]);
+const { group: workerHealthGroup } = toRpcGroup([healthContract]);
 
 const okStatusClient = Layer.effect(
   HttpClient.HttpClient,
@@ -89,14 +89,14 @@ export const measuredCheck = <E, R>(
     })
   );
 
-export const rpcSearchCheck = (url: string) =>
+export const rpcHealthCheck = (url: string) =>
   measuredCheck(
-    "rpc-search",
-    Effect.gen(function* browserSearch() {
-      const rpc = yield* RpcClient.make(readerSearchGroup);
-      const found = yield* rpc.search({ limit: 1, query: "cartridge" });
+    "rpc-health",
+    Effect.gen(function* workerHealth() {
+      const rpc = yield* RpcClient.make(workerHealthGroup);
+      const reported = yield* rpc.health({});
 
-      return found.matches.length > 0;
+      return reported.status === "ok";
     }).pipe(
       Effect.provide(
         RpcClient.layerProtocolHttp({ url: `${url}/rpc` }).pipe(
@@ -703,7 +703,7 @@ export const postDeployChecks = Effect.fn("postDeployChecks")(
           );
         })
       ),
-      yield* rpcSearchCheck(url),
+      yield* rpcHealthCheck(url),
       yield* measuredCheck(
         "execute-429-document",
         Effect.gen(function* rateDocument() {

@@ -1,8 +1,8 @@
+import { ExecuteError } from "@chromescribe/capability";
+import { toRpcGroup } from "@chromescribe/capability/rpc-group";
+import { gateOutcome } from "@chromescribe/check-harness";
+import { healthContract } from "@chromescribe/core/contracts";
 import { expect, it } from "@effect/vitest";
-import { ExecuteError } from "@rat-stack/capability";
-import { toRpcGroup } from "@rat-stack/capability/rpc-group";
-import { gateOutcome } from "@rat-stack/check-harness";
-import { searchContract } from "@rat-stack/core/contracts";
 import { Effect, Layer, Predicate, Schema } from "effect";
 import * as HttpClient from "effect/http/HttpClient";
 import type * as HttpClientRequest from "effect/http/HttpClientRequest";
@@ -15,29 +15,20 @@ import * as RpcServer from "effect/rpc/RpcServer";
 import {
   contentVersionRetryDefaults,
   postDeployChecks,
-  rpcSearchCheck,
+  rpcHealthCheck,
 } from "../src/checks.js";
 
-const { group: searchGroup } = toRpcGroup([searchContract]);
+const { group: healthGroup } = toRpcGroup([healthContract]);
 
-const searchServer = (matchCount: number) =>
-  RpcServer.toHttpEffect(searchGroup).pipe(
+const healthServer = () =>
+  RpcServer.toHttpEffect(healthGroup).pipe(
     Effect.provide(
       Layer.mergeAll(
-        searchGroup.toLayer({
-          search: ({ query }) =>
+        healthGroup.toLayer({
+          health: () =>
             Effect.succeed({
-              matches: Array.from({ length: matchCount }, (_, index) => ({
-                description: `Match ${index} for ${query}`,
-                digest: `digest-${index}`,
-                excerpt: query,
-                id: `ratstack://lore/match-${index}`,
-                kind: "lore" as const,
-                routePath: `/lore/match-${index}`,
-                score: 1,
-                title: `Match ${index}`,
-              })),
-              total: matchCount,
+              runtime: "cloudflare-worker",
+              status: "ok" as const,
             }),
         }),
         RpcSerialization.layerJson
@@ -48,7 +39,7 @@ const searchServer = (matchCount: number) =>
 const isRpcUrl = (url: string) => /^\/rpc\/?$/u.test(new URL(url).pathname);
 
 const answerRpc = (
-  server: Effect.Success<ReturnType<typeof searchServer>>,
+  server: Effect.Success<ReturnType<typeof healthServer>>,
   request: HttpClientRequest.HttpClientRequest,
   body: string
 ) =>
@@ -165,7 +156,7 @@ it.effect.prop(
   }) =>
     Effect.gen(function* test() {
       const requests: string[] = [];
-      const rpc = yield* searchServer(1);
+      const rpc = yield* healthServer();
 
       const client = HttpClient.make((request) => {
         requests.push(request.url);
@@ -276,7 +267,7 @@ it.effect.prop(
   },
   ({ status, completeFailure, timeoutKind, networkKind, refusedFetch }) =>
     Effect.gen(function* qualifiesSandboxDiagnostics() {
-      const rpc = yield* searchServer(1);
+      const rpc = yield* healthServer();
 
       const client = HttpClient.make((request) => {
         const body = Predicate.isTagged(request.body, "Uint8Array")
@@ -352,14 +343,13 @@ it.effect.prop(
 );
 
 it.effect.prop(
-  "browser search is healthy only when POST /rpc answers 200 with a match",
+  "worker health is green only when POST /rpc answers 200 with ok",
   {
-    matchCount: Schema.Int.check(Schema.isBetween({ maximum: 3, minimum: 0 })),
     status: Schema.Literals([200, 404, 503]),
   },
-  ({ matchCount, status }) =>
+  ({ status }) =>
     Effect.gen(function* qualifiesBrowserSearch() {
-      const rpc = yield* searchServer(matchCount);
+      const rpc = yield* healthServer();
       const seen: string[] = [];
 
       const client = HttpClient.make((request) => {
@@ -381,14 +371,12 @@ it.effect.prop(
             );
       });
 
-      const verdict = yield* rpcSearchCheck("https://example.com").pipe(
+      const verdict = yield* rpcHealthCheck("https://example.com").pipe(
         Effect.provideService(HttpClient.HttpClient, client)
       );
 
       expect(seen).toStrictEqual(["POST rpc"]);
-      expect(gateOutcome(verdict) === "pass").toBe(
-        status === 200 && matchCount > 0
-      );
+      expect(gateOutcome(verdict) === "pass").toBe(status === 200);
     }).pipe(Effect.scoped),
   { arbitrary: { runs: 50 } }
 );

@@ -1,5 +1,5 @@
+import { Approval, ApprovalDenied } from "@chromescribe/capability/approval";
 import { expect, it } from "@effect/vitest";
-import { Approval, ApprovalDenied } from "@rat-stack/capability/approval";
 import { Context, Effect, Result, Schema } from "effect";
 
 import {

@@ -1,5 +1,5 @@
+import { defineFlag } from "@chromescribe/core/flags";
 import { expect, it } from "@effect/vitest";
-import { defineFlag } from "@rat-stack/core/flags";
 import { Schema } from "effect";
 import * as Arbitrary from "effect/Arbitrary";
 

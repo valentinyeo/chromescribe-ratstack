@@ -1,5 +1,5 @@
-import { watchActor } from "@rat-stack/capability/actor-watch";
-import type { Verdict } from "@rat-stack/check-harness";
+import { watchActor } from "@chromescribe/capability/actor-watch";
+import type { Verdict } from "@chromescribe/check-harness";
 import {
   createEffectActor,
   createEffectLogic,

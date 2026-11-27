@@ -84,6 +84,7 @@ const mcpConversation = async (
     }, 15_000);
 
     const pending = [...messages];
+
     const sendNext = () => {
       let message = pending.shift();
 

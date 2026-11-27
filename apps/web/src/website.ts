@@ -17,7 +17,7 @@ export class Website extends Cloudflare.Website.Foldkit<Website>()(
     );
 
     const props = {
-      rootDir: ".",
+      rootDir: "../web",
       workersDev: false,
       env: { RPC_BACKEND: backend },
       assets: { runWorkerFirst: ["/api/*", "/rpc", "/reports/*"] },

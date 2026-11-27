@@ -42,7 +42,7 @@ export class ChromeScribeWorker extends Cloudflare.Worker<ChromeScribeWorker>()(
     return {
       bundle: true,
       compatibility: { date: "2026-05-28" },
-      main: "./src/index.ts",
+      main: "../worker/src/index.ts",
       workersDev: false,
       env: {
         DB: database,

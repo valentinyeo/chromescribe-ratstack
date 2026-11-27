@@ -1,8 +1,11 @@
-import { listCategoriesContract, listTranscriptsContract } from "@chromescribe/core/contracts";
+import {
+  listCategoriesContract,
+  listTranscriptsContract,
+} from "@chromescribe/core/contracts";
 import { Schema } from "effect";
 import { Message } from "foldkit";
 
-import { Tab, Theme, TranscriptPage } from "./model.js";
+import { Tab, Theme, TranscriptPageSchema } from "./model.js";
 
 export const Messages = Message.defineMessageUnion({
   LoadedLocation: { href: Schema.String, theme: Theme },
@@ -10,10 +13,14 @@ export const Messages = Message.defineMessageUnion({
   SelectedCategory: { category: Schema.String },
   RequestedMore: {},
   RequestedRetry: {},
-  LoadedHome: { revision: Schema.Int, offset: Schema.Int, result: listTranscriptsContract.output },
+  LoadedHome: {
+    revision: Schema.Int,
+    offset: Schema.Int,
+    result: listTranscriptsContract.output,
+  },
   LoadedCategories: { categories: listCategoriesContract.output },
   FailedCategories: { error: Schema.String },
-  LoadedTranscript: { revision: Schema.Int, transcript: TranscriptPage },
+  LoadedTranscript: { revision: Schema.Int, transcript: TranscriptPageSchema },
   FailedLoad: { revision: Schema.Int, error: Schema.String },
   SelectedTab: { tab: Tab },
   ToggledTheme: {},
@@ -24,4 +31,5 @@ export const Messages = Message.defineMessageUnion({
   CompletedAction: { notice: Schema.String },
   FailedThumbnail: { id: Schema.Int },
 });
-export type Messages = typeof Messages.Type;
+
+export type AppMessage = typeof Messages.Type;

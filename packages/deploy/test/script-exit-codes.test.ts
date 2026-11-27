@@ -42,14 +42,14 @@ it.layer(NodeServices.layer)("deploy script exit codes", (test) => {
         for (const [name, command] of driverScripts) {
           const driver = scripts[name] ?? "";
 
-          expect(driver).toContain("pnpm --filter @chromescribe/infra ");
+          expect(driver).toContain("pnpm --filter @chromescribe/infra run ");
 
           const exitCode = yield* spawner.exitCode(
             ChildProcess.make(
               "sh",
               [
                 "-c",
-                `${driver.replace("pnpm --filter @chromescribe/infra", `node ${stub}`)} --profile ratstack`,
+                `${driver.replace("pnpm --filter @chromescribe/infra run", `node ${stub}`)} --profile ratstack`,
               ],
               {
                 cwd: root,

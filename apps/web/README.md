@@ -16,8 +16,8 @@ The Foldkit browser reads the merged transcript contracts through `/rpc`. The We
 Before enabling it, the owner must approve deployment and:
 
 1. Confirm Cloudflare Access already protects `next.chromescribe.yeoux.net`, including the intended preview audience. This workflow never changes Access policies.
-2. Create the GitHub environment `chromescribe-preview` with required owner review. Review each run's uploaded plan before approving that environment. Do not enable this workflow without that protection.
+2. Review the preview plan for the intended account and named `chromescribe-preview` Alchemy profile before approving deployment. There is no GitHub environment reviewer gate.
 3. Set repository secrets `CLOUDFLARE_API_TOKEN` and `ACCESS_AUD`, and repository variable `CLOUDFLARE_ACCOUNT_ID` for the reviewed account. Credentials are imported through stdin into the named `chromescribe-preview` Alchemy profile and removed from the hosted runner afterward.
 4. Set repository variable `CHROMESCRIBE_PREVIEW_DEPLOY_ENABLED=true` after that approval. Without the token, approval switch, account or audience, pushes and dispatches skip with a notice rather than failing.
 
-An enabled run checks the revision through Turbo, publishes its preview plan, then waits at the protected environment before applying. Both jobs run only on GitHub-hosted `ubuntu-latest`. The stage is always `preview`, the API gate is on, and the only Website custom domain is `next.chromescribe.yeoux.net`. The production hostname is untouched. Shared D1/R2 resources remain adopted and retained, with no migration provider.
+An enabled run checks the revision through Turbo, publishes its preview plan, then applies it automatically after the plan job succeeds. Both jobs run only on GitHub-hosted `ubuntu-latest`. The stage is always `preview`, the API gate is on, and the only Website custom domain is `next.chromescribe.yeoux.net`. The production hostname is untouched. Shared D1/R2 resources remain adopted and retained, with no migration provider.

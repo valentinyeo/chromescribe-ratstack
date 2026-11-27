@@ -8,9 +8,9 @@ const RootScripts = Schema.fromJsonString(
 );
 
 const driverScripts = [
-  ["deploy:plan", "deployPlan"],
-  ["deploy:prod", "deployProd"],
-  ["deploy:rollback", "deployRollback"],
+  ["infra:plan", "plan"],
+  ["infra:deploy", "deploy"],
+  ["infra:destroy", "destroy"],
 ] as const;
 
 const escalated = 6;
@@ -40,17 +40,16 @@ it.layer(NodeServices.layer)("deploy script exit codes", (test) => {
         );
 
         for (const [name, command] of driverScripts) {
-          const script = scripts[name] ?? "";
-          const [, driver = ""] = script.split("varlock run -- ");
+          const driver = scripts[name] ?? "";
 
-          expect(driver).toContain("packages/deploy/dist/cli.js");
+          expect(driver).toContain("pnpm --filter @chromescribe/infra ");
 
           const exitCode = yield* spawner.exitCode(
             ChildProcess.make(
               "sh",
               [
                 "-c",
-                `${driver.replace("../../packages/deploy/dist/cli.js", stub)} --profile ratstack`,
+                `${driver.replace("pnpm --filter @chromescribe/infra", `node ${stub}`)} --profile ratstack`,
               ],
               {
                 cwd: root,

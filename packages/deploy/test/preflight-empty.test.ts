@@ -44,13 +44,7 @@ it.effect(
 
       expect(verdict.outcome).toBe("refused");
       expect(verdict.step).toBe("preflight");
-      expect(verdict.keys).toStrictEqual([
-        "EMAIL_FORWARD_TO",
-        "ALCHEMY_PROFILE",
-        "EVENTS_ENABLED",
-        "EVENTS_IDENTITY_MODE",
-        "EVENTS_SINK_TOKEN",
-      ]);
+      expect(verdict.keys).toStrictEqual(["ALCHEMY_PROFILE"]);
       expect(verdict.rows).toStrictEqual([]);
       expect(requests).toStrictEqual([]);
     })

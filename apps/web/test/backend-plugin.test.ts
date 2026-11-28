@@ -34,7 +34,10 @@ it.each(["virtual:foldkit/fetch", "\0virtual:foldkit/fetch"])(
 
 it("rejects a changed Foldkit fetch handler", () => {
   expect(() =>
-    transformFoldkitFetchEntry("export default handler;", "\0virtual:foldkit/fetch")
+    transformFoldkitFetchEntry(
+      "export default handler;",
+      "\0virtual:foldkit/fetch"
+    )
   ).toThrow(
     "Foldkit fetch entry changed. Backend forwarding requires its generated handler. Fix: update `apps/web/backend-plugin.ts` for the pinned Foldkit version."
   );

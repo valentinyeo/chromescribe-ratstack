@@ -4,7 +4,7 @@ export const backendPlugin = (): Plugin => ({
   name: "chromescribe-backend",
   enforce: "post",
   transform(code, id) {
-    if (!id.endsWith("virtual:foldkit/fetch")) {
+    if (id !== "virtual:foldkit/fetch" && id !== "\0virtual:foldkit/fetch") {
       return null;
     }
 
